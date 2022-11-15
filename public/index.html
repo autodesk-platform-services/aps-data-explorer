@@ -1,0 +1,149 @@
+<html>
+  <head>
+    <title>Data Explorer</title>
+    <link
+      href="https://unpkg.com/graphiql@1.10.0/graphiql.min.css"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body style="margin: 0; overflow: hidden">
+    
+    <div id="graphiql" style="height: calc(100vh)">
+      Authenticating...
+    </div>
+
+    <script
+      crossorigin
+      src="https://unpkg.com/react/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/graphiql@1.10.0/graphiql.min.js"
+    ></script>
+
+    <script>
+      let apis = {
+        "data": {
+          name: "Data",
+          endpoint: "%APS_DATA_ENDPOINT%"
+        }
+      }
+      let api = null;
+
+      window.addEventListener("load", async () => {
+        try {
+          let url = new URL(window.location.href);
+          api = url.searchParams.get("api");
+          let accessToken = url.searchParams.get("access_token");
+          let clientId = url.searchParams.get("client_id");
+          let clientSecret = url.searchParams.get("client_secret");
+
+          if (!apis[api]) {
+            api = "data";
+          }
+
+          if (!accessToken) {
+            let params = "";
+            if (clientId && clientSecret) {
+              params = `?client_id=${clientId}&client_secret=${clientSecret}&api=${api}`;
+            } else {
+              params = `?api=${api}`;
+            }
+            let res = await fetch(`/oauth/token${params}`);
+            if (!res.ok) throw "No access token";
+
+            accessToken = await res.text();
+
+            // Get a new token every 30 minutes
+            setInterval(async () => {
+              let res = await fetch(`/oauth/token?refresh=true`);
+              if (res.ok) {
+                accessToken = await res.text();
+              } else {
+                let res = await fetch("/oauth/url");
+                url = await res.text();
+                location.href = url;
+              }
+            }, 30 * 60 * 1000);
+          }
+
+          let defaultQuery = `# Welcome to the GraphiQL Data Explorer
+#
+# GraphiQL is an in-browser tool for writing, validating, and
+# testing GraphQL queries.
+#
+# Type queries into this side of the screen, and you will see intelligent
+# typeaheads aware of the current GraphQL type schema and live syntax and
+# validation errors highlighted within the text.
+#
+# GraphQL queries typically start with a "{" character. Lines that start
+# with a # are ignored.
+#
+# An example GraphQL query might look like:
+#
+#     query {
+#       hubs {
+#         results {
+#           name
+#         }
+#       }
+#     }
+#
+# Keyboard shortcuts:
+#
+#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)
+#
+#     Merge Query:  Shift-Ctrl-M (or press the merge button above)
+#
+#       Run Query:  Ctrl-Enter (or press the play button above)
+#
+#   Auto Complete:  Ctrl-Space (or just start typing)
+#
+
+query {
+  hubs {
+    results {
+      name
+    }
+  }
+}
+`;
+
+          function graphQLFetcher(graphQLParams, opts) {
+            const { headers = {} } = opts;
+            return fetch(
+              apis[api].endpoint,
+              {
+                method: "post",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: "Bearer " + accessToken,
+                  ...headers,
+                },
+                body: JSON.stringify(graphQLParams),
+              }
+            ).then((response) => response.json());
+          }
+
+          ReactDOM.render(
+            React.createElement(GraphiQL, {
+              fetcher: graphQLFetcher,
+              query: defaultQuery,
+              defaultQuery: { defaultQuery },
+            }),
+            document.getElementById("graphiql")
+          );
+        } catch {
+          let res = await fetch("/oauth/url");
+          url = await res.text();
+          location.href = url;
+        }
+      });
+    </script>
+  </body>
+</html>
