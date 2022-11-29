@@ -31,5 +31,5 @@ Now you can check the documentation
 
 And run queries
 
-![Queries](./readme/Queries.png)
+![Queries](./thumbnail.png)
 
