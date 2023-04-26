@@ -21,7 +21,7 @@ let clientSecret = process.env.APS_CLIENT_SECRET || "YOUR CLIENT SECRET";
 let serverPort = process.env.PORT || 3000;
 let serverUrl = process.env.BASE_URL || "localhost";
 let callbackUrl = process.env.APS_CALLBACK_URL || `${serverUrl}/callback/oauth`;
-const apsUrl = "https://developer.api.autodesk.com"; 
+const apsUrl = process.env.APS_BASE_URL || "https://developer.api.autodesk.com"; 
 let dataEndpoint = process.env.APS_DATA_ENDPOINT;
 
 app.get("/callback/oauth", async (req, res) => {
