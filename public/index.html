@@ -8,31 +8,19 @@
   </head>
 
   <body style="margin: 0; overflow: hidden">
-    
-    <div id="graphiql" style="height: calc(100vh)">
-      Authenticating...
+    <div id="embedded-explorer" style="height: 100vh; width: 100vw">
+      <span id="text">Authenticating...</span> 
     </div>
 
-    <script
-      crossorigin
-      src="https://unpkg.com/react/umd/react.production.min.js"
-    ></script>
-    <script
-      crossorigin
-      src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"
-    ></script>
-    <script
-      crossorigin
-      src="https://unpkg.com/graphiql@1.10.0/graphiql.min.js"
-    ></script>
+    <script src="https://embeddable-explorer.cdn.apollographql.com/_latest/embeddable-explorer.umd.production.min.js"></script>
 
     <script>
       let apis = {
-        "data": {
+        data: {
           name: "Data",
-          endpoint: "%APS_DATA_ENDPOINT%"
-        }
-      }
+          endpoint: "%APS_DATA_ENDPOINT%",
+        },
+      };
       let api = null;
 
       window.addEventListener("load", async () => {
@@ -113,23 +101,21 @@ query {
   }
 }
 `;
-
+  /*
           function graphQLFetcher(graphQLParams, opts) {
             const { headers = {} } = opts;
-            return fetch(
-              apis[api].endpoint,
-              {
-                method: "post",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: "Bearer " + accessToken,
-                  ...headers,
-                },
-                body: JSON.stringify(graphQLParams),
-              }
-            ).then((response) => response.json());
+            return fetch(apis[api].endpoint, {
+              method: "post",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + accessToken,
+                ...headers,
+              },
+              body: JSON.stringify(graphQLParams),
+            }).then((response) => response.json());
           }
 
+        
           ReactDOM.render(
             React.createElement(GraphiQL, {
               fetcher: graphQLFetcher,
@@ -138,6 +124,25 @@ query {
             }),
             document.getElementById("graphiql")
           );
+          */
+          const span = document.getElementById("text").textContent = "";
+          new window.EmbeddedExplorer({
+            target: "#embedded-explorer",
+            graphRef: "Forge-Data-Graph@prod-private",
+            persistExplorerState: false,
+            initialState: {
+              document: defaultQuery,
+              variables: {},
+              headers: {
+                Authorization: "Bearer " + accessToken
+              },
+              displayOptions: {
+                showHeadersAndEnvVars: true,
+                docsPanelState: "open",
+                theme: "light",
+              },
+            },
+          });
         } catch {
           let res = await fetch("/oauth/url");
           url = await res.text();
