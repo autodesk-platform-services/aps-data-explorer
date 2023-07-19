@@ -2,16 +2,58 @@
   <head>
     <title>Data Explorer</title>
     <link
-      href="https://unpkg.com/graphiql@1.10.0/graphiql.min.css"
+      href="https://unpkg.com/graphiql@2.0.13/graphiql.min.css"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="main.css" />
   </head>
 
   <body style="margin: 0; overflow: hidden">
-    
-    <div id="graphiql" style="height: calc(100vh)">
-      Authenticating...
+    <div id="header">
+      <img
+        class="logo"
+        src="https://cdn.autodesk.io/logo/black/stacked.png"
+        alt="Autodesk Platform Services"
+      />
+      <span class="title">MFG Data Model Explorer</span>
+      <div
+        id="projectinput"
+        data-balloon-length="fit"
+        aria-label="Here goes a project id like b.f609fbf7..."
+        data-balloon-pos="down"
+      >
+        <input
+          type="text"
+          placeholder="PASTE THE PROJECT ID HERE"
+          id="projectid"
+        />
+      </div>
+      <div
+        id="iteminput"
+        data-balloon-length="fit"
+        aria-label="Here goes an item/version id like urn:adsk.wipprod:dm.lineage..."
+        data-balloon-pos="down"
+      >
+        <input type="text" placeholder="ITEM/VERSION ID HERE" id="modelurn" />
+      </div>
+      <div class="form-check form-switch form-switch-sm">
+        <input class="form-check-input" type="checkbox" id="toggleviewer" />
+        <label class="form-check-label" for="toggleviewer" style="margin: 0.3em"
+          >Viewer</label
+        >
+      </div>
+      <button
+        id="login"
+        style="visibility: hidden"
+        data-balloon-length="fit"
+        aria-label="Login Here!"
+        data-balloon-pos="down"
+      >
+        Login
+      </button>
     </div>
+
+    <div id="graphiql" style="height: calc(100vh)">Authenticating...</div>
 
     <script
       crossorigin
@@ -23,56 +65,19 @@
     ></script>
     <script
       crossorigin
-      src="https://unpkg.com/graphiql@1.10.0/graphiql.min.js"
+      src="https://unpkg.com/graphiql@2.0.13/graphiql.min.js"
     ></script>
 
     <script>
       let apis = {
-        "data": {
+        data: {
           name: "Data",
-          endpoint: "%APS_DATA_ENDPOINT%"
-        }
-      }
+          endpoint: "%APS_DATA_ENDPOINT%",
+        },
+      };
       let api = null;
 
-      window.addEventListener("load", async () => {
-        try {
-          let url = new URL(window.location.href);
-          api = url.searchParams.get("api");
-          let accessToken = url.searchParams.get("access_token");
-          let clientId = url.searchParams.get("client_id");
-          let clientSecret = url.searchParams.get("client_secret");
-
-          if (!apis[api]) {
-            api = "data";
-          }
-
-          if (!accessToken) {
-            let params = "";
-            if (clientId && clientSecret) {
-              params = `?client_id=${clientId}&client_secret=${clientSecret}&api=${api}`;
-            } else {
-              params = `?api=${api}`;
-            }
-            let res = await fetch(`/oauth/token${params}`);
-            if (!res.ok) throw "No access token";
-
-            accessToken = await res.text();
-
-            // Get a new token every 30 minutes
-            setInterval(async () => {
-              let res = await fetch(`/oauth/token?refresh=true`);
-              if (res.ok) {
-                accessToken = await res.text();
-              } else {
-                let res = await fetch("/oauth/url");
-                url = await res.text();
-                location.href = url;
-              }
-            }, 30 * 60 * 1000);
-          }
-
-          let defaultQuery = `# Welcome to the GraphiQL Data Explorer
+      let defaultQuery = `# Welcome to the GraphiQL Data Explorer
 #
 # GraphiQL is an in-browser tool for writing, validating, and
 # testing GraphQL queries.
@@ -114,25 +119,199 @@ query {
 }
 `;
 
+      function onTabs(data) {
+        console.log(data);
+      }
+
+      function setInitialTabs() {
+        let tabState = JSON.parse(
+          window.localStorage.getItem("graphiql:tabState")
+        );
+        let tutorialTabs = [
+          { query: "Task 1" },
+          { query: "Task 2" },
+          { query: "Task 3" },
+          { query: "Task 4" },
+        ].map(ensureTutorialTab);
+        if (!!tabState) {
+          let nonTutorialTabs = tabState.tabs.filter(
+            (tab) =>
+              !tab.query.match(
+                /Task 1 – Pick Hub|Task 2 – Pick Project|Task 3 – Pick Component|Task 4 – Get Component Version Properties/g
+              )
+          );
+          tabState.tabs = tutorialTabs.concat(nonTutorialTabs);
+        } else {
+          tabState = {
+            activeTabIndex: 0,
+            tabs: [],
+          };
+          tabState.tabs.push(...tutorialTabs);
+        }
+        let tabStateString = JSON.stringify(tabState);
+        window.localStorage.setItem("graphiql:tabState", tabStateString);
+      }
+
+      function generateUUID() {
+        let d = new Date().getTime(),
+          d2 =
+            (performance && performance.now && performance.now() * 1000) || 0;
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+          let r = Math.random() * 16;
+          if (d > 0) {
+            r = (d + r) % 16 | 0;
+            d = Math.floor(d / 16);
+          } else {
+            r = (d2 + r) % 16 | 0;
+            d2 = Math.floor(d2 / 16);
+          }
+          return (c == "x" ? r : (r & 0x7) | 0x8).toString(16);
+        });
+      }
+
+      function ensureTutorialTab(tab) {
+        let task = tab.query;
+        tab.hash = null;
+        tab.headers = null;
+        tab.id = generateUUID();
+        tab.operationName = null;
+        tab.response = null;
+        tab.variables = null;
+        switch (task) {
+          case "Task 1":
+            tab.title = "GetHubs";
+            tab.query = `# Task 1 – Pick a Hub
+query GetHubs {
+  hubs {
+    pagination {
+      cursor
+    }
+    results {
+      name
+      id
+    }
+  }
+}`;
+            break;
+          case "Task 2":
+            tab.title = "GetProjects";
+            tab.query = `# Task 2 – Pick Projects
+query GetProjects {
+  projects(hubId: "yourhubid") {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+      alternativeRepresentations{
+        externalProjectId
+      }
+    }
+  }
+}`;
+            break;
+          case "Task 3":
+            tab.title = "GetDesignsByProject";
+            tab.query = `# Task 3 – Retrieve designs from project
+      query GetDesignsByProject {
+      aecDesignsByProject(projectId: "yourprojectid") {
+      pagination {
+        cursor
+      }
+      results{
+        name
+        id
+        alternativeRepresentations{
+          fileUrn
+          fileVersionUrn
+        }
+      }
+      }
+      }`;
+            break;
+          case "Task 4":
+            tab.title = "GetElementsFromCategory";
+            tab.query = `# Task 4 – Get Elements within a design using a filter
+      query GetElementsFromCategory {
+      elements(designId: "yourdesignid", filter: {query:"property.name.category==Walls"}) {
+      pagination {
+        cursor
+      }
+      results {
+        id
+        name
+        properties {
+          results {
+            name
+            value
+          }
+        }
+      }
+      } 
+      }`;
+            break;
+        }
+        return tab;
+      }
+
+      window.addEventListener("load", async () => {
+        try {
+          let url = new URL(window.location.href);
+          api = url.searchParams.get("api");
+          let accessToken = url.searchParams.get("access_token");
+          let clientId = url.searchParams.get("client_id");
+          let clientSecret = url.searchParams.get("client_secret");
+
+          if (!apis[api]) {
+            api = "data";
+          }
+
+          if (!accessToken) {
+            let params = "";
+            if (clientId && clientSecret) {
+              params = `?client_id=${clientId}&client_secret=${clientSecret}&api=${api}`;
+            } else {
+              params = `?api=${api}`;
+            }
+            let res = await fetch(`/oauth/token${params}`);
+            if (!res.ok) throw "No access token";
+
+            accessToken = await res.text();
+
+            // Get a new token every 30 minutes
+            setInterval(async () => {
+              let res = await fetch(`/oauth/token?refresh=true`);
+              if (res.ok) {
+                accessToken = await res.text();
+              } else {
+                let res = await fetch("/oauth/url");
+                url = await res.text();
+                location.href = url;
+              }
+            }, 30 * 60 * 1000);
+          }
+
           function graphQLFetcher(graphQLParams, opts) {
             const { headers = {} } = opts;
-            return fetch(
-              apis[api].endpoint,
-              {
-                method: "post",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: "Bearer " + accessToken,
-                  ...headers,
-                },
-                body: JSON.stringify(graphQLParams),
-              }
-            ).then((response) => response.json());
+            return fetch(apis[api].endpoint, {
+              method: "post",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + accessToken,
+                ...headers,
+              },
+              body: JSON.stringify(graphQLParams),
+            }).then((response) => response.json());
           }
+
+          setInitialTabs();
 
           ReactDOM.render(
             React.createElement(GraphiQL, {
               fetcher: graphQLFetcher,
+              defaultEditorToolsVisibility: true,
+              onTabs: onTabs,
               query: defaultQuery,
               defaultQuery: { defaultQuery },
             }),
