@@ -8,39 +8,39 @@
   </head>
 
   <body style="margin: 0; overflow: hidden">
-    <div id="embedded-explorer" style="height: 100vh; width: 100vw">
+    <div id="embedded-sandbox" style="height: 100vh; width: 100vw">
       <span id="text">Authenticating...</span> 
     </div>
 
-    <script src="https://embeddable-explorer.cdn.apollographql.com/_latest/embeddable-explorer.umd.production.min.js"></script>
+    <script src="https://embeddable-sandbox.cdn.apollographql.com/_latest/embeddable-sandbox.umd.production.min.js"></script>
 
     <script>
-      let apis = {
+      let _apis = {
         data: {
           name: "Data",
           endpoint: "%APS_DATA_ENDPOINT%",
         },
       };
-      let api = null;
+      let _api = null;
 
       window.addEventListener("load", async () => {
         try {
           let url = new URL(window.location.href);
-          api = url.searchParams.get("api");
+          _api = url.searchParams.get("api");
           let accessToken = url.searchParams.get("access_token");
           let clientId = url.searchParams.get("client_id");
           let clientSecret = url.searchParams.get("client_secret");
 
-          if (!apis[api]) {
-            api = "data";
+          if (!_apis[_api]) {
+            _api = "data";
           }
 
           if (!accessToken) {
             let params = "";
             if (clientId && clientSecret) {
-              params = `?client_id=${clientId}&client_secret=${clientSecret}&api=${api}`;
+              params = `?client_id=${clientId}&client_secret=${clientSecret}&api=${_api}`;
             } else {
-              params = `?api=${api}`;
+              params = `?api=${_api}`;
             }
             let res = await fetch(`/oauth/token${params}`);
             if (!res.ok) throw "No access token";
@@ -101,20 +101,25 @@ query {
   }
 }
 `;
-  /*
+  
           function graphQLFetcher(graphQLParams, opts) {
             const { headers = {} } = opts;
-            return fetch(apis[api].endpoint, {
+            return fetch(_apis[_api].endpoint, {
               method: "post",
               headers: {
-                "Content-Type": "application/json",
-                Authorization: "Bearer " + accessToken,
+                //"Content-Type": "application/json",
+                "Authorization": "Bearer " + accessToken,
                 ...headers,
               },
-              body: JSON.stringify(graphQLParams),
-            }).then((response) => response.json());
+              body: opts.body,
+            })
+            /*
+            .then((response) => response.json())
+            .catch(error => {
+              console.log(error);
+            });*/
           }
-
+/*
         
           ReactDOM.render(
             React.createElement(GraphiQL, {
@@ -126,18 +131,20 @@ query {
           );
           */
           const span = document.getElementById("text").textContent = "";
-          new window.EmbeddedExplorer({
-            target: "#embedded-explorer",
-            graphRef: "Forge-Data-Graph@prod-private",
+          new window.EmbeddedSandbox({
+            target: "#embedded-sandbox",
+            initialEndpoint: _apis[_api].endpoint,
+            //handleRequest: graphQLFetcher,
+            //graphRef: "Forge-Data-Graph@prod-private",
             persistExplorerState: false,
             initialState: {
               document: defaultQuery,
               variables: {},
               headers: {
-                Authorization: "Bearer " + accessToken
+               Authorization: "Bearer " + accessToken
               },
               displayOptions: {
-                showHeadersAndEnvVars: true,
+                //showHeadersAndEnvVars: true,
                 docsPanelState: "open",
                 theme: "light",
               },
