@@ -16,44 +16,10 @@
         alt="Autodesk Platform Services"
       />
       <span class="title">MFG Data Model Explorer</span>
-      <div
-        id="projectinput"
-        data-balloon-length="fit"
-        aria-label="Here goes a project id like b.f609fbf7..."
-        data-balloon-pos="down"
-      >
-        <input
-          type="text"
-          placeholder="PASTE THE PROJECT ID HERE"
-          id="projectid"
-        />
-      </div>
-      <div
-        id="iteminput"
-        data-balloon-length="fit"
-        aria-label="Here goes an item/version id like urn:adsk.wipprod:dm.lineage..."
-        data-balloon-pos="down"
-      >
-        <input type="text" placeholder="ITEM/VERSION ID HERE" id="modelurn" />
-      </div>
-      <div class="form-check form-switch form-switch-sm">
-        <input class="form-check-input" type="checkbox" id="toggleviewer" />
-        <label class="form-check-label" for="toggleviewer" style="margin: 0.3em"
-          >Viewer</label
-        >
-      </div>
-      <button
-        id="login"
-        style="visibility: hidden"
-        data-balloon-length="fit"
-        aria-label="Login Here!"
-        data-balloon-pos="down"
-      >
-        Login
-      </button>
+      
     </div>
 
-    <div id="graphiql" style="height: calc(100vh)">Authenticating...</div>
+    <div id="graphiql">Authenticating...</div>
 
     <script
       crossorigin
@@ -92,9 +58,11 @@
 # An example GraphQL query might look like:
 #
 #     query {
-#       hubs {
-#         results {
-#           name
+#       nav {
+#         hubs {
+#           results {
+#             name
+#           }
 #         }
 #       }
 #     }
@@ -111,9 +79,11 @@
 #
 
 query {
-  hubs {
-    results {
-      name
+  nav {
+    hubs {
+      results {
+        name
+      }
     }
   }
 }
@@ -132,12 +102,13 @@ query {
           { query: "Task 2" },
           { query: "Task 3" },
           { query: "Task 4" },
+          { query: "Task 5" },
         ].map(ensureTutorialTab);
         if (!!tabState) {
           let nonTutorialTabs = tabState.tabs.filter(
             (tab) =>
               !tab.query.match(
-                /Task 1 – Pick Hub|Task 2 – Pick Project|Task 3 – Pick Component|Task 4 – Get Component Version Properties/g
+                /Task 1 – Pick Hub|Task 2 – Pick Project|Task 3 – Pick Folder|Task 4 – Pick Component|Task 5 – Get Component Properties/g
               )
           );
           tabState.tabs = tutorialTabs.concat(nonTutorialTabs);
@@ -180,76 +151,108 @@ query {
         switch (task) {
           case "Task 1":
             tab.title = "GetHubs";
-            tab.query = `# Task 1 – Pick a Hub
+            tab.query = `# Task 1 – Pick Hub
 query GetHubs {
-  hubs {
-    pagination {
-      cursor
-    }
-    results {
-      name
-      id
+  nav {
+    hubs {
+      pagination {
+        cursor
+      }
+      results {
+        name
+        id
+      }
     }
   }
 }`;
             break;
           case "Task 2":
             tab.title = "GetProjects";
-            tab.query = `# Task 2 – Pick Projects
+            tab.query = `# Task 2 – Pick Project
 query GetProjects {
-  projects(hubId: "yourhubid") {
-    pagination {
-      cursor
-    }
-    results {
-      id
-      name
-      alternativeRepresentations{
-        externalProjectId
-      }
-    }
-  }
-}`;
-            break;
-          case "Task 3":
-            tab.title = "GetDesignsByProject";
-            tab.query = `# Task 3 – Retrieve designs from project
-      query GetDesignsByProject {
-      aecDesignsByProject(projectId: "yourprojectid") {
-      pagination {
-        cursor
-      }
-      results{
-        name
-        id
-        alternativeRepresentations{
-          fileUrn
-          fileVersionUrn
-        }
-      }
-      }
-      }`;
-            break;
-          case "Task 4":
-            tab.title = "GetElementsFromCategory";
-            tab.query = `# Task 4 – Get Elements within a design using a filter
-      query GetElementsFromCategory {
-      elements(designId: "yourdesignid", filter: {query:"property.name.category==Walls"}) {
+  nav {
+    projects(hubId: "yourhubid") {
       pagination {
         cursor
       }
       results {
         id
         name
-        properties {
-          results {
-            name
-            value
+      }
+    }
+  }
+}`;
+            break;
+          case "Task 3":
+            tab.title = "GetFolders";
+            tab.query = `# Task 3 – Pick Folder
+query GetFolders {
+  nav {
+    project(projectId: "yourprojectid") {
+      folders {
+        pagination {
+          cursor
+        }
+        results {
+          name
+          id
+        }
+      }
+    }
+  }
+}`;
+            break;
+          case "Task 4":
+            tab.title = "GetItems";
+            tab.query = `# Task 4 – Pick Component
+query GetItems {
+  nav {
+    folder(
+      projectId: "yourprojectid", 
+      folderId: "yourfolderid") {
+      folders {
+        pagination {
+          cursor
+        }
+        results {
+          __typename
+          id
+          name
+        }
+      }
+      items {
+        pagination {
+          cursor
+        }
+        results {
+          __typename
+          id
+          name
+          ... on MFGDesignItem {
+            tipRootComponent {
+              id
+              name
+            }
           }
         }
       }
-      } 
-      }`;
+    }
+  } 
+}`;
+            break;
+          case "Task 5":
+            tab.title = "GetProperties";
+            tab.query = `# Task 5 – Get Component Properties
+query GetProperties {
+  mfg {
+    componentVersion(componentVersionId: "yourcomponentversionid") {
+      id
+      name
+      partNumber
+      partDescription
+    }
+  } 
+}`;
             break;
         }
         return tab;
