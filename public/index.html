@@ -36,13 +36,7 @@
     ></script>
 
     <script>
-      let apis = {
-        data: {
-          name: "Data",
-          endpoint: "%APS_DATA_ENDPOINT%",
-        },
-      };
-      let api = null;
+      const _endpoint = "%APS_DATA_ENDPOINT%";
 
       let defaultQuery = `# Welcome to the GraphiQL Data Explorer
 #
@@ -262,43 +256,27 @@ query GetProperties {
       window.addEventListener("load", async () => {
         try {
           let url = new URL(window.location.href);
-          api = url.searchParams.get("api");
-          let accessToken = url.searchParams.get("access_token");
-          let clientId = url.searchParams.get("client_id");
-          let clientSecret = url.searchParams.get("client_secret");
 
-          if (!apis[api]) {
-            api = "data";
-          }
+          let res = await fetch(`/oauth/token`);
+          if (!res.ok) throw "No access token";
 
-          if (!accessToken) {
-            let params = "";
-            if (clientId && clientSecret) {
-              params = `?client_id=${clientId}&client_secret=${clientSecret}&api=${api}`;
+          let accessToken = await res.text();
+
+          // Get a new token every 30 minutes
+          setInterval(async () => {
+            let res = await fetch(`/oauth/token?refresh=true`);
+            if (res.ok) {
+              accessToken = await res.text();
             } else {
-              params = `?api=${api}`;
+              let res = await fetch("/oauth/url");
+              url = await res.text();
+              location.href = url;
             }
-            let res = await fetch(`/oauth/token${params}`);
-            if (!res.ok) throw "No access token";
-
-            accessToken = await res.text();
-
-            // Get a new token every 30 minutes
-            setInterval(async () => {
-              let res = await fetch(`/oauth/token?refresh=true`);
-              if (res.ok) {
-                accessToken = await res.text();
-              } else {
-                let res = await fetch("/oauth/url");
-                url = await res.text();
-                location.href = url;
-              }
-            }, 30 * 60 * 1000);
-          }
-
+          }, 30 * 60 * 1000);
+          
           function graphQLFetcher(graphQLParams, opts) {
             const { headers = {} } = opts;
-            return fetch(apis[api].endpoint, {
+            return fetch(_endpoint, {
               method: "post",
               headers: {
                 "Content-Type": "application/json",

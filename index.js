@@ -6,6 +6,9 @@ import axios from "axios";
 import cookieSession from "cookie-session";
 import { url } from "inspector";
 
+import bodyParser from 'body-parser';
+const urlencodedParser = bodyParser.urlencoded({ extended: false })
+
 let app = express();
 
 app.use(
@@ -32,10 +35,11 @@ app.get("/callback/oauth", async (req, res) => {
   try {
     let cId = req.session.client_id ? req.session.client_id : clientId;
     let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
+    let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
 
     const response = await axios({
       method: "POST",
-      url: `${apsUrl}/authentication/v1/gettoken`,
+      url: `${cApsUrl}/authentication/v1/gettoken`,
       headers: {
         "Content-Type": "application/x-www-form-urlencoded"
       },
@@ -46,11 +50,7 @@ app.get("/callback/oauth", async (req, res) => {
     req.session.access_token = response.data.access_token;
     req.session.refresh_token = response.data.refresh_token;
 
-    if (req.session.client_id && req.session.client_secret) {
-      res.redirect(`/?client_id=${req.session.client_id}&client_secret=${req.session.client_secret}&api=${req.session.api}`);
-    } else {
-      res.redirect(`/`);
-    }
+    res.redirect(`/`);
   } catch (error) {
     console.log(error);
     res.end();
@@ -64,10 +64,11 @@ app.get("/oauth/token", async (req, res) => {
     try {
       let cId = req.session.client_id ? req.session.client_id : clientId;
       let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
+      let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
       let rToken = req.session.refresh_token;
       const response = await axios({
         method: "POST",
-        url: `${apsUrl}/authentication/v1/refreshtoken`,
+        url: `${cApsUrl}/authentication/v1/refreshtoken`,
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
         },
@@ -90,28 +91,6 @@ app.get("/oauth/token", async (req, res) => {
     }
   }
 
-  if (req.query.client_id && req.query.client_secret) {
-    // If credentials changed
-    if (req.query.client_id !== req.session.client_id) {
-      req.session = {
-        client_id: req.query.client_id,
-        client_secret: req.query.client_secret,
-        api: req.query.api
-      };
-      res.status(401).end();
-      return;
-    } else {
-      req.session.api = req.query.api;
-    }
-  } else {
-    // If credentials changed
-    if (req.session.client_id) {
-      req.session = null;
-      res.status(401).end();
-      return;
-    }
-  }
-
   let access_token = req.session?.access_token;
 
   if (!access_token) {
@@ -126,9 +105,10 @@ app.get("/oauth/url", (req, res) => {
   console.log("/oauth/url", req.session);
 
   let cId = req.session.client_id ? req.session.client_id : clientId;
+  let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
 
   const url =
-    apsUrl +
+    cApsUrl +
     "/authentication/v1/authorize?response_type=code" +
     "&client_id=" +
     cId +
@@ -140,10 +120,37 @@ app.get("/oauth/url", (req, res) => {
 });
 
 app.get("/", (req, res) => {
+  let cDataEndpoint = req.session.dataEndpoint ? req.session.dataEndpoint : dataEndpoint;
   fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/index.html', 'utf8', (err, text) => {
-    text = text.replace("%APS_DATA_ENDPOINT%", dataEndpoint);
+    text = text.replace("%APS_DATA_ENDPOINT%", cDataEndpoint);
     res.send(text);
   });
+});
+
+app.get("/credentials", (req, res) => {
+  fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/credentials.html', 'utf8', (err, text) => {
+    text = text.replace(/\%CALLBACK_URL\%/g, callbackUrl);
+    res.send(text);
+  });
+});
+
+app.post("/credentials", urlencodedParser, (req, res) => {
+  req.session.client_id = req.body.clientId;
+  req.session.client_secret = req.body.clientSecret;
+  req.session.dataEndpoint = req.body.gqlUrl;
+  req.session.apsUrl = req.body.baseUrl;
+
+  delete req.session.access_token;
+  delete req.session.refresh_token;
+
+  if (req.body.clientId === "") {
+    delete req.session.client_id; 
+    delete req.session.client_secret;
+    delete req.session.dataEndpoint;
+    delete req.session.apsUrl;
+  }
+
+  res.redirect("/");
 });
 
 app.use(
@@ -151,7 +158,6 @@ app.use(
     path.join(path.dirname(fileURLToPath(import.meta.url)), "public")
   )
 );
-
 
 app.listen(serverPort);
 
