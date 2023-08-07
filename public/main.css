@@ -65,3 +65,7 @@ body, html {
   width: calc(2em + 1.5em);
   border-radius: 2rem;
 }
+
+.graphiql-container {
+  overflow: auto;
+}
