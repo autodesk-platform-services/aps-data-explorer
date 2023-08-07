@@ -36,14 +36,15 @@ app.get("/callback/oauth", async (req, res) => {
     let cId = req.session.client_id ? req.session.client_id : clientId;
     let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
     let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
-
+    const clientIdSecret = btoa(`${cId}:${cSecret}`);
     const response = await axios({
       method: "POST",
-      url: `${cApsUrl}/authentication/v1/gettoken`,
+      url: `${cApsUrl}/authentication/v2/token`,
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Basic " + clientIdSecret
       },
-      data: `client_id=${cId}&client_secret=${cSecret}&grant_type=authorization_code&code=${code}&redirect_uri=${callbackUrl}`
+      data: `grant_type=authorization_code&code=${code}&redirect_uri=${callbackUrl}`
     });
 
     req.session = req.session || {};
@@ -57,6 +58,25 @@ app.get("/callback/oauth", async (req, res) => {
   }
 });
 
+app.get("/oauth/token2LO", async (req, res) => {
+  console.log("/oauth/token2LO", req.session);
+  let cId = req.session.client_id ? req.session.client_id : clientId;
+  let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
+  let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
+  const clientIdSecret = btoa(`${cId}:${cSecret}`);
+  const response = await axios({
+    method: "POST",
+    url: `${cApsUrl}/authentication/v2/token`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Basic " + clientIdSecret
+    },
+    data: `grant_type=client_credentials&scope=data:read data:write data:create`
+  }); 
+  
+  res.end(response.data.access_token);
+})
+
 app.get("/oauth/token", async (req, res) => {
   console.log("/oauth/token", req.session);
 
@@ -66,13 +86,15 @@ app.get("/oauth/token", async (req, res) => {
       let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
       let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
       let rToken = req.session.refresh_token;
+      const clientIdSecret = btoa(`${cId}:${cSecret}`);
       const response = await axios({
         method: "POST",
-        url: `${cApsUrl}/authentication/v1/refreshtoken`,
+        url: `${cApsUrl}/authentication/v2/token`,
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Basic " + clientIdSecret
         },
-        data: `client_id=${cId}&client_secret=${cSecret}&grant_type=refresh_token&refresh_token=${rToken}`
+        data: `grant_type=refresh_token&refresh_token=${rToken}`
       });
 
       req.session = req.session || {};
@@ -109,7 +131,7 @@ app.get("/oauth/url", (req, res) => {
 
   const url =
     cApsUrl +
-    "/authentication/v1/authorize?response_type=code" +
+    "/authentication/v2/authorize?response_type=code" +
     "&client_id=" +
     cId +
     "&redirect_uri=" +

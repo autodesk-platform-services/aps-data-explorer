@@ -5,6 +5,8 @@
       href="https://unpkg.com/graphiql@2.0.13/graphiql.min.css"
       rel="stylesheet"
     />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.css" />
     <link rel="stylesheet" href="main.css" />
   </head>
@@ -17,7 +19,10 @@
         alt="Autodesk Platform Services"
       />
       <span class="title">MFG Data Model Explorer</span>
-      
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" id="use2LO">
+        <label class="form-check-label" for="use2LO">Use 2-legged token</label>
+      </div>
     </div>
 
     <div id="graphiql">Authenticating...</div>
@@ -274,13 +279,20 @@ query GetProperties {
             }
           }, 30 * 60 * 1000);
           
-          function graphQLFetcher(graphQLParams, opts) {
+          const use2LO = document.getElementById("use2LO");
+          async function graphQLFetcher(graphQLParams, opts) {
+            let usedToken = accessToken;
+            if (use2LO.checked) {
+              let res = await fetch("/oauth/token2LO");
+              usedToken = await res.text();
+            }
+
             const { headers = {} } = opts;
             return fetch(_endpoint, {
               method: "post",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: "Bearer " + accessToken,
+                Authorization: "Bearer " + usedToken,
                 ...headers,
               },
               body: JSON.stringify(graphQLParams),
