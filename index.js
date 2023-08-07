@@ -121,7 +121,8 @@ app.get("/oauth/url", (req, res) => {
 
 app.get("/", (req, res) => {
   let cDataEndpoint = req.session.dataEndpoint ? req.session.dataEndpoint : dataEndpoint;
-  fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/index.html', 'utf8', (err, text) => {
+  const fileName = cDataEndpoint.endsWith("/private/graphql") ? "index.html"  : "index-mono.html"
+  fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/' + fileName, 'utf8', (err, text) => {
     text = text.replace("%APS_DATA_ENDPOINT%", cDataEndpoint);
     res.send(text);
   });

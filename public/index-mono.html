@@ -1,0 +1,299 @@
+<html>
+  <head>
+    <title>Data Explorer</title>
+    <link
+      href="https://unpkg.com/graphiql@2.0.13/graphiql.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.css" />
+    <link rel="stylesheet" href="main.css" />
+  </head>
+
+  <body style="margin: 0; overflow: hidden">
+    <div id="header">
+      <img
+        class="logo"
+        src="https://cdn.autodesk.io/logo/black/stacked.png"
+        alt="Autodesk Platform Services"
+      />
+      <span class="title">MFG Data Model Explorer</span>
+      
+    </div>
+
+    <div id="graphiql">Authenticating...</div>
+
+    <script
+      crossorigin
+      src="https://unpkg.com/react/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom/umd/react-dom.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/graphiql@2.0.13/graphiql.min.js"
+    ></script>
+
+    <script>
+      const _endpoint = "%APS_DATA_ENDPOINT%";
+
+      let defaultQuery = `# Welcome to the GraphiQL Data Explorer
+#
+# GraphiQL is an in-browser tool for writing, validating, and
+# testing GraphQL queries.
+#
+# Type queries into this side of the screen, and you will see intelligent
+# typeaheads aware of the current GraphQL type schema and live syntax and
+# validation errors highlighted within the text.
+#
+# GraphQL queries typically start with a "{" character. Lines that start
+# with a # are ignored.
+#
+# An example GraphQL query might look like:
+#
+#     query {
+#       hubs {
+#         results {
+#           name
+#         }
+#       }
+#     }
+#
+# Keyboard shortcuts:
+#
+#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)
+#
+#     Merge Query:  Shift-Ctrl-M (or press the merge button above)
+#
+#       Run Query:  Ctrl-Enter (or press the play button above)
+#
+#   Auto Complete:  Ctrl-Space (or just start typing)
+#
+
+query {
+  hubs {
+    results {
+      name
+    }
+  }
+}
+`;
+
+      function onTabs(data) {
+        console.log(data);
+      }
+
+      function setInitialTabs() {
+        let tabState = JSON.parse(
+          window.localStorage.getItem("graphiql:tabState")
+        );
+        let tutorialTabs = [
+          { query: "Task 1" },
+          { query: "Task 2" },
+          { query: "Task 3" },
+          { query: "Task 4" },
+          { query: "Task 5" },
+        ].map(ensureTutorialTab);
+        if (!!tabState) {
+          let nonTutorialTabs = tabState.tabs.filter(
+            (tab) =>
+              !tab.query.match(
+                /Task 1 – Pick Hub|Task 2 – Pick Project|Task 3 – Pick Folder|Task 4 – Pick Component|Task 5 – Get Component Properties/g
+              )
+          );
+          tabState.tabs = tutorialTabs.concat(nonTutorialTabs);
+        } else {
+          tabState = {
+            activeTabIndex: 0,
+            tabs: [],
+          };
+          tabState.tabs.push(...tutorialTabs);
+        }
+        let tabStateString = JSON.stringify(tabState);
+        window.localStorage.setItem("graphiql:tabState", tabStateString);
+      }
+
+      function generateUUID() {
+        let d = new Date().getTime(),
+          d2 =
+            (performance && performance.now && performance.now() * 1000) || 0;
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+          let r = Math.random() * 16;
+          if (d > 0) {
+            r = (d + r) % 16 | 0;
+            d = Math.floor(d / 16);
+          } else {
+            r = (d2 + r) % 16 | 0;
+            d2 = Math.floor(d2 / 16);
+          }
+          return (c == "x" ? r : (r & 0x7) | 0x8).toString(16);
+        });
+      }
+
+      function ensureTutorialTab(tab) {
+        let task = tab.query;
+        tab.hash = null;
+        tab.headers = null;
+        tab.id = generateUUID();
+        tab.operationName = null;
+        tab.response = null;
+        tab.variables = null;
+        switch (task) {
+          case "Task 1":
+            tab.title = "GetHubs";
+            tab.query = `# Task 1 – Pick Hub
+query GetHubs {
+  hubs {
+    pagination {
+      cursor
+    }
+    results {
+      name
+      id
+    }
+  }
+}`;
+            break;
+          case "Task 2":
+            tab.title = "GetProjects";
+            tab.query = `# Task 2 – Pick Project
+query GetProjects {
+  projects(hubId: "yourhubid") {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+    }
+  }
+}`;
+            break;
+          case "Task 3":
+            tab.title = "GetFolders";
+            tab.query = `# Task 3 – Pick Folder
+query GetFolders {
+  project(projectId: "yourprojectid") {
+    rootFolder {
+      items {
+        pagination {
+          cursor
+        }
+        results {
+          __typename
+          id
+          name
+          ... on Component {
+            tipVersion {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+            break;
+          case "Task 4":
+            tab.title = "GetItems";
+            tab.query = `# Task 4 – Pick Component
+query GetItems {
+  item(
+    projectId: "yourprojectid", 
+    itemId: "yourfolderid") {
+    ... on Folder {
+      id
+      name
+      items {
+        pagination {
+          cursor
+        }
+        results {
+          __typename
+          id
+          name
+          ... on Component {
+            tipVersion {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+}`;
+            break;
+          case "Task 5":
+            tab.title = "GetProperties";
+            tab.query = `# Task 5 – Get Component Properties
+query GetProperties {
+  componentVersion(componentVersionId: "yourcomponentversionid") {
+    id
+    name
+    partNumber
+    partDescription
+  }
+}`;
+            break;
+        }
+        return tab;
+      }
+
+      window.addEventListener("load", async () => {
+        try {
+          let url = new URL(window.location.href);
+
+          let res = await fetch(`/oauth/token`);
+          if (!res.ok) throw "No access token";
+
+          let accessToken = await res.text();
+
+          // Get a new token every 30 minutes
+          setInterval(async () => {
+            let res = await fetch(`/oauth/token?refresh=true`);
+            if (res.ok) {
+              accessToken = await res.text();
+            } else {
+              let res = await fetch("/oauth/url");
+              url = await res.text();
+              location.href = url;
+            }
+          }, 30 * 60 * 1000);
+          
+          function graphQLFetcher(graphQLParams, opts) {
+            const { headers = {} } = opts;
+            return fetch(_endpoint, {
+              method: "post",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + accessToken,
+                ...headers,
+              },
+              body: JSON.stringify(graphQLParams),
+            }).then((response) => response.json());
+          }
+
+          setInitialTabs();
+
+          ReactDOM.render(
+            React.createElement(GraphiQL, {
+              fetcher: graphQLFetcher,
+              defaultEditorToolsVisibility: true,
+              onTabs: onTabs,
+              query: defaultQuery,
+              defaultQuery: { defaultQuery },
+            }),
+            document.getElementById("graphiql")
+          );
+        } catch {
+          let res = await fetch("/oauth/url");
+          url = await res.text();
+          location.href = url;
+        }
+      });
+    </script>
+  </body>
+</html>
