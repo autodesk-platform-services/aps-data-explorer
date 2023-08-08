@@ -71,7 +71,7 @@ app.get("/oauth/token2LO", async (req, res) => {
       "Content-Type": "application/x-www-form-urlencoded",
       "Authorization": "Basic " + clientIdSecret
     },
-    data: `grant_type=client_credentials&scope=data:read data:write data:create`
+    data: `grant_type=client_credentials&scope=data:read data:write data:create data:search`
   }); 
   
   res.end(response.data.access_token);
@@ -136,7 +136,7 @@ app.get("/oauth/url", (req, res) => {
     cId +
     "&redirect_uri=" +
     callbackUrl +
-    "&scope=data:read data:write data:create";
+    "&scope=data:read data:write data:create data:search";
 
   res.end(url);
 });
