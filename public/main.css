@@ -69,3 +69,8 @@ body, html {
 .graphiql-container {
   overflow: auto;
 }
+
+label.required::after { 
+  content: "*";
+  color: red;
+}

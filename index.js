@@ -160,8 +160,8 @@ app.get("/credentials", (req, res) => {
 app.post("/credentials", urlencodedParser, (req, res) => {
   req.session.client_id = req.body.clientId;
   req.session.client_secret = req.body.clientSecret;
-  req.session.dataEndpoint = req.body.gqlUrl;
-  req.session.apsUrl = req.body.baseUrl;
+  req.session.dataEndpoint = req.body.gqlUrl || dataEndpoint;
+  req.session.apsUrl = req.body.baseUrl || apsUrl;
 
   delete req.session.access_token;
   delete req.session.refresh_token;
