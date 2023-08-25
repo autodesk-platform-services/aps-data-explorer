@@ -169,9 +169,9 @@ query GetHubs {
           case "Task 2":
             tab.title = "GetProjects";
             tab.query = `# Task 2 – Pick Project
-query GetProjects {
+query GetProjects($hubId:ID!) {
   nav {
-    projects(hubId: "yourhubid") {
+    projects(hubId: $hubId) {
       pagination {
         cursor
       }
@@ -181,14 +181,17 @@ query GetProjects {
       }
     }
   }
+}`;         
+            tab.variables = `{
+  "hubId": "yourhubid"
 }`;
             break;
           case "Task 3":
             tab.title = "GetFolders";
             tab.query = `# Task 3 – Pick Folder
-query GetFolders {
+query GetFolders($projectId:ID!) {
   nav {
-    project(projectId: "yourprojectid") {
+    project(projectId: $projectId) {
       folders {
         pagination {
           cursor
@@ -201,15 +204,18 @@ query GetFolders {
     }
   }
 }`;
+            tab.variables = `{
+  "projectId": "yourprojectid"
+}`;
             break;
           case "Task 4":
             tab.title = "GetItems";
             tab.query = `# Task 4 – Pick Component
-query GetItems {
+query GetItems($projectId:ID!, $folderId:ID!) {
   nav {
     folder(
-      projectId: "yourprojectid", 
-      folderId: "yourfolderid") {
+      projectId: $projectId, 
+      folderId: $folderId) {
       folders {
         pagination {
           cursor
@@ -239,19 +245,26 @@ query GetItems {
     }
   } 
 }`;
+            tab.variables = `{
+  "projectId": "yourprojectid",
+  "folderId": "yourfolderid"
+}`;
             break;
           case "Task 5":
             tab.title = "GetProperties";
             tab.query = `# Task 5 – Get Component Properties
-query GetProperties {
+query GetProperties($componentVersionId:ID!) {
   mfg {
-    componentVersion(componentVersionId: "yourcomponentversionid") {
+    componentVersion(componentVersionId: $componentVersionId) {
       id
       name
       partNumber
       partDescription
     }
   } 
+}`;
+            tab.variables = `{
+  "componentVersionId": "yourcomponentversionid"
 }`;
             break;
         }

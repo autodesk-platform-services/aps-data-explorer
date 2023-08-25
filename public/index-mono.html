@@ -158,8 +158,8 @@ query GetHubs {
           case "Task 2":
             tab.title = "GetProjects";
             tab.query = `# Task 2 – Pick Project
-query GetProjects {
-  projects(hubId: "yourhubid") {
+query GetProjects($hubId:String!) {
+  projects(hubId: $hubId) {
     pagination {
       cursor
     }
@@ -169,12 +169,15 @@ query GetProjects {
     }
   }
 }`;
+            tab.variables = `{
+  "hubId": "yourhubid"
+}`;
             break;
           case "Task 3":
             tab.title = "GetFolders";
             tab.query = `# Task 3 – Pick Folder
-query GetFolders {
-  project(projectId: "yourprojectid") {
+query GetFolders($projectId:String!) {
+  project(projectId: $projectId) {
     rootFolder {
       items {
         pagination {
@@ -195,14 +198,17 @@ query GetFolders {
     }
   }
 }`;
+            tab.variables = `{
+  "projectId": "yourprojectid"
+}`;
             break;
           case "Task 4":
             tab.title = "GetItems";
             tab.query = `# Task 4 – Pick Component
-query GetItems {
+query GetItems($projectId:String!, $folderId:String!) {
   item(
-    projectId: "yourprojectid", 
-    itemId: "yourfolderid") {
+    projectId: $projectId, 
+    itemId: $folderId) {
     ... on Folder {
       id
       name
@@ -225,17 +231,24 @@ query GetItems {
     }
   }
 }`;
+            tab.variables = `{
+  "projectId": "yourprojectid",
+  "folderId": "yourfolderid"
+}`;
             break;
           case "Task 5":
             tab.title = "GetProperties";
             tab.query = `# Task 5 – Get Component Properties
-query GetProperties {
-  componentVersion(componentVersionId: "yourcomponentversionid") {
+query GetProperties($componentVersionId:String!) {
+  componentVersion(componentVersionId: $componentVersionId) {
     id
     name
     partNumber
     partDescription
   }
+}`;
+            tab.variables = `{
+  "componentVersionId": "yourcomponentversionid"
 }`;
             break;
         }
