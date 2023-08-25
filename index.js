@@ -150,6 +150,14 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/voyager", (req, res) => {
+  let cDataEndpoint = req.session.dataEndpoint ? req.session.dataEndpoint : dataEndpoint;
+  fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/voyager.html', 'utf8', (err, text) => {
+    text = text.replace("%APS_DATA_ENDPOINT%", cDataEndpoint);
+    res.send(text);
+  });
+});
+
 app.get("/credentials", (req, res) => {
   fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/credentials.html', 'utf8', (err, text) => {
     text = text.replace(/\%CALLBACK_URL\%/g, callbackUrl);
