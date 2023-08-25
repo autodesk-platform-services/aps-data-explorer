@@ -296,8 +296,9 @@ query GetProperties($componentVersionId:String!) {
               fetcher: graphQLFetcher,
               defaultEditorToolsVisibility: true,
               onTabs: onTabs,
+              activeTabIndex: 0,
               query: defaultQuery,
-              defaultQuery: { defaultQuery },
+              variables: "",
             }),
             document.getElementById("graphiql")
           );
