@@ -27,33 +27,39 @@
   <body>
     <div id="voyager">Loading...</div>
     <script type="module">
-      const _endpoint = "%APS_DATA_ENDPOINT%";
+      try {
+        const _endpoint = "%APS_DATA_ENDPOINT%";
 
-       let res = await fetch(`/oauth/token`);
-      if (!res.ok) throw "No access token";
+        const res = await fetch(`/oauth/token`);
+        if (!res.ok) throw "No access token";
 
-      let accessToken = await res.text();
+        let accessToken = await res.text();
 
-      const { init, voyagerIntrospectionQuery: query } = GraphQLVoyager;
-      const response = await fetch(
-        _endpoint,
-        {
-          method: 'post',
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            Authorization: "Bearer " + accessToken,
+        const { init, voyagerIntrospectionQuery: query } = GraphQLVoyager;
+        const response = await fetch(
+          _endpoint,
+          {
+            method: 'post',
+            headers: {
+              Accept: 'application/json',
+              'Content-Type': 'application/json',
+              Authorization: "Bearer " + accessToken,
+            },
+            body: JSON.stringify({ query }),
+            credentials: 'omit',
           },
-          body: JSON.stringify({ query }),
-          credentials: 'omit',
-        },
-      );
-      const introspection = await response.json();
+        );
+        const introspection = await response.json();
 
-      // Render <Voyager /> into the body.
-      GraphQLVoyager.init(document.getElementById('voyager'), {
-        introspection,
-      });
+        // Render <Voyager /> into the body.
+        GraphQLVoyager.init(document.getElementById('voyager'), {
+          introspection,
+        });
+      } catch {
+        const res = await fetch("/oauth/url");
+        const url = await res.text();
+        location.href = url + "&state=voyager";
+      }
     </script>
   </body>
 </html>

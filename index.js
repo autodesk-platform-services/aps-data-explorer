@@ -30,7 +30,7 @@ let dataEndpoint = process.env.APS_DATA_ENDPOINT;
 app.get("/callback/oauth", async (req, res) => {
   console.log("/callback/oauth", req.session);
 
-  const { code } = req.query;
+  const { code, state } = req.query;
 
   try {
     let cId = req.session.client_id ? req.session.client_id : clientId;
@@ -51,7 +51,7 @@ app.get("/callback/oauth", async (req, res) => {
     req.session.access_token = response.data.access_token;
     req.session.refresh_token = response.data.refresh_token;
 
-    res.redirect(`/`);
+    res.redirect(`/` + (state ? `${state}` : ""));
   } catch (error) {
     console.log(error);
     res.end();
