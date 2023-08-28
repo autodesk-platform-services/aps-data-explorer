@@ -35,6 +35,19 @@
 
         let accessToken = await res.text();
 
+        // Get a new token every 30 minutes
+        setInterval(async () => {
+            let res = await fetch(`/oauth/token?refresh=true`);
+            if (res.ok) {
+              accessToken = await res.text();
+            } else {
+              let res = await fetch("/oauth/url");
+              url = await res.text();
+              location.href = url + "&state=voyager";
+            }
+          }, 30 * 60 * 1000
+        );
+
         const { init, voyagerIntrospectionQuery: query } = GraphQLVoyager;
         const response = await fetch(
           _endpoint,
