@@ -184,6 +184,27 @@ app.post("/credentials", urlencodedParser, (req, res) => {
   res.redirect("/");
 });
 
+app.get("/userprofile", async (req, res) => {
+  const response = await axios({
+    method: "POST",
+    url: `https://api.userprofile.autodesk.com/userinfo`,
+    headers: {
+      "Authorization": "Bearer " + req.session.access_token
+    }
+  });
+  
+  res.json(response.data);
+});
+
+app.get("/logout", async (req, res) => {
+  let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
+
+  req.session = null;
+
+  res.end(`${cApsUrl}/authentication/v2/logout`);
+});
+
+
 app.use(
   express.static(
     path.join(path.dirname(fileURLToPath(import.meta.url)), "public")

@@ -28,6 +28,13 @@ body, html {
   overflow: auto;
 }
 
+#voyager {
+  position: absolute;
+  height: calc(100% - 3em);
+  width: 100%;
+  top: 3em;
+}
+
 #viewer {
   width: 100%;
   right: 0;
@@ -50,6 +57,10 @@ body, html {
 #header .title {
   height: auto;
   margin-right: auto;
+}
+
+.doc-navigation {
+  box-sizing: content-box;
 }
 
 .form-check-input {
