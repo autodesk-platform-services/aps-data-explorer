@@ -85,3 +85,11 @@ label.required::after {
   content: "*";
   color: red;
 }
+
+div:has(>.graphiql-sessions) {
+  max-width: calc(100vw - 76px);
+}
+
+.graphiql-sessions {
+  width: 100%;
+}
