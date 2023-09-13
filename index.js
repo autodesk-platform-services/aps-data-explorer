@@ -6,6 +6,9 @@ import axios from "axios";
 import cookieSession from "cookie-session";
 import { url } from "inspector";
 
+import bodyParser from 'body-parser';
+const urlencodedParser = bodyParser.urlencoded({ extended: false })
+
 let app = express();
 
 app.use(
@@ -27,35 +30,52 @@ let dataEndpoint = process.env.APS_DATA_ENDPOINT;
 app.get("/callback/oauth", async (req, res) => {
   console.log("/callback/oauth", req.session);
 
-  const { code } = req.query;
+  const { code, state } = req.query;
 
   try {
     let cId = req.session.client_id ? req.session.client_id : clientId;
     let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
-
+    let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
+    const clientIdSecret = btoa(`${cId}:${cSecret}`);
     const response = await axios({
       method: "POST",
-      url: `${apsUrl}/authentication/v1/gettoken`,
+      url: `${cApsUrl}/authentication/v2/token`,
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": "Basic " + clientIdSecret
       },
-      data: `client_id=${cId}&client_secret=${cSecret}&grant_type=authorization_code&code=${code}&redirect_uri=${callbackUrl}`
+      data: `grant_type=authorization_code&code=${code}&redirect_uri=${callbackUrl}`
     });
 
     req.session = req.session || {};
     req.session.access_token = response.data.access_token;
     req.session.refresh_token = response.data.refresh_token;
 
-    if (req.session.client_id && req.session.client_secret) {
-      res.redirect(`/?client_id=${req.session.client_id}&client_secret=${req.session.client_secret}&api=${req.session.api}`);
-    } else {
-      res.redirect(`/`);
-    }
+    res.redirect(`/` + (state ? `${state}` : ""));
   } catch (error) {
     console.log(error);
     res.end();
   }
 });
+
+app.get("/oauth/token2LO", async (req, res) => {
+  console.log("/oauth/token2LO", req.session);
+  let cId = req.session.client_id ? req.session.client_id : clientId;
+  let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
+  let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
+  const clientIdSecret = btoa(`${cId}:${cSecret}`);
+  const response = await axios({
+    method: "POST",
+    url: `${cApsUrl}/authentication/v2/token`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Authorization": "Basic " + clientIdSecret
+    },
+    data: `grant_type=client_credentials&scope=data:read data:write data:create data:search`
+  }); 
+  
+  res.end(response.data.access_token);
+})
 
 app.get("/oauth/token", async (req, res) => {
   console.log("/oauth/token", req.session);
@@ -64,14 +84,17 @@ app.get("/oauth/token", async (req, res) => {
     try {
       let cId = req.session.client_id ? req.session.client_id : clientId;
       let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
+      let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
       let rToken = req.session.refresh_token;
+      const clientIdSecret = btoa(`${cId}:${cSecret}`);
       const response = await axios({
         method: "POST",
-        url: `${apsUrl}/authentication/v1/refreshtoken`,
+        url: `${cApsUrl}/authentication/v2/token`,
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Basic " + clientIdSecret
         },
-        data: `client_id=${cId}&client_secret=${cSecret}&grant_type=refresh_token&refresh_token=${rToken}`
+        data: `grant_type=refresh_token&refresh_token=${rToken}`
       });
 
       req.session = req.session || {};
@@ -90,28 +113,6 @@ app.get("/oauth/token", async (req, res) => {
     }
   }
 
-  if (req.query.client_id && req.query.client_secret) {
-    // If credentials changed
-    if (req.query.client_id !== req.session.client_id) {
-      req.session = {
-        client_id: req.query.client_id,
-        client_secret: req.query.client_secret,
-        api: req.query.api
-      };
-      res.status(401).end();
-      return;
-    } else {
-      req.session.api = req.query.api;
-    }
-  } else {
-    // If credentials changed
-    if (req.session.client_id) {
-      req.session = null;
-      res.status(401).end();
-      return;
-    }
-  }
-
   let access_token = req.session?.access_token;
 
   if (!access_token) {
@@ -126,32 +127,89 @@ app.get("/oauth/url", (req, res) => {
   console.log("/oauth/url", req.session);
 
   let cId = req.session.client_id ? req.session.client_id : clientId;
+  let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
 
   const url =
-    apsUrl +
-    "/authentication/v1/authorize?response_type=code" +
+    cApsUrl +
+    "/authentication/v2/authorize?response_type=code" +
     "&client_id=" +
     cId +
     "&redirect_uri=" +
     callbackUrl +
-    "&scope=data:read data:write data:create";
+    "&scope=data:read data:write data:create data:search";
 
   res.end(url);
 });
 
 app.get("/", (req, res) => {
-  fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/index.html', 'utf8', (err, text) => {
-    text = text.replace("%APS_DATA_ENDPOINT%", dataEndpoint);
+  let cDataEndpoint = req.session.dataEndpoint ? req.session.dataEndpoint : dataEndpoint;
+  const fileName = cDataEndpoint.endsWith("/private/graphql") ? "index.html"  : "index-mono.html"
+  fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/' + fileName, 'utf8', (err, text) => {
+    text = text.replace("%APS_DATA_ENDPOINT%", cDataEndpoint);
     res.send(text);
   });
 });
+
+app.get("/voyager", (req, res) => {
+  let cDataEndpoint = req.session.dataEndpoint ? req.session.dataEndpoint : dataEndpoint;
+  fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/voyager.html', 'utf8', (err, text) => {
+    text = text.replace("%APS_DATA_ENDPOINT%", cDataEndpoint);
+    res.send(text);
+  });
+});
+
+app.get("/credentials", (req, res) => {
+  fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/credentials.html', 'utf8', (err, text) => {
+    text = text.replace(/\%CALLBACK_URL\%/g, callbackUrl);
+    res.send(text);
+  });
+});
+
+app.post("/credentials", urlencodedParser, (req, res) => {
+  req.session.client_id = req.body.clientId;
+  req.session.client_secret = req.body.clientSecret;
+  req.session.dataEndpoint = req.body.gqlUrl || dataEndpoint;
+  req.session.apsUrl = req.body.baseUrl || apsUrl;
+
+  delete req.session.access_token;
+  delete req.session.refresh_token;
+
+  if (req.body.clientId === "") {
+    delete req.session.client_id; 
+    delete req.session.client_secret;
+    delete req.session.dataEndpoint;
+    delete req.session.apsUrl;
+  }
+
+  res.redirect("/");
+});
+
+app.get("/userprofile", async (req, res) => {
+  const response = await axios({
+    method: "POST",
+    url: `https://api.userprofile.autodesk.com/userinfo`,
+    headers: {
+      "Authorization": "Bearer " + req.session.access_token
+    }
+  });
+  
+  res.json(response.data);
+});
+
+app.get("/logout", async (req, res) => {
+  let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
+
+  req.session = null;
+
+  res.end(`${cApsUrl}/authentication/v2/logout`);
+});
+
 
 app.use(
   express.static(
     path.join(path.dirname(fileURLToPath(import.meta.url)), "public")
   )
 );
-
 
 app.listen(serverPort);
 

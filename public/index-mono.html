@@ -23,10 +23,6 @@
         alt="Autodesk Platform Services"
       />
       <span class="title">MFG Data Model Explorer</span>
-      <div class="form-check form-switch float-right">
-        <input class="form-check-input" type="checkbox" role="switch" id="use2LO">
-        <label class="form-check-label" for="use2LO">Use 2-legged token</label>
-      </div>
       <div id="avatar" class="dropdown text-end float-right">
         <a
           href="#"
@@ -82,7 +78,6 @@
       crossorigin
       src="https://unpkg.com/graphiql@2.0.13/graphiql.min.js"
     ></script>
-
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
@@ -109,11 +104,9 @@
 # An example GraphQL query might look like:
 #
 #     query {
-#       nav {
-#         hubs {
-#           results {
-#             name
-#           }
+#       hubs {
+#         results {
+#           name
 #         }
 #       }
 #     }
@@ -130,11 +123,9 @@
 #
 
 query {
-  nav {
-    hubs {
-      results {
-        name
-      }
+  hubs {
+    results {
+      name
     }
   }
 }
@@ -204,15 +195,13 @@ query {
             tab.title = "GetHubs";
             tab.query = `# Task 1 – Pick Hub
 query GetHubs {
-  nav {
-    hubs {
-      pagination {
-        cursor
-      }
-      results {
-        name
-        id
-      }
+  hubs {
+    pagination {
+      cursor
+    }
+    results {
+      name
+      id
     }
   }
 }`;
@@ -220,19 +209,17 @@ query GetHubs {
           case "Task 2":
             tab.title = "GetProjects";
             tab.query = `# Task 2 – Pick Project
-query GetProjects($hubId:ID!) {
-  nav {
-    projects(hubId: $hubId) {
-      pagination {
-        cursor
-      }
-      results {
-        id
-        name
-      }
+query GetProjects($hubId:String!) {
+  projects(hubId: $hubId) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
     }
   }
-}`;         
+}`;
             tab.variables = `{
   "hubId": "yourhubid"
 }`;
@@ -240,16 +227,23 @@ query GetProjects($hubId:ID!) {
           case "Task 3":
             tab.title = "GetFolders";
             tab.query = `# Task 3 – Pick Folder
-query GetFolders($projectId:ID!) {
-  nav {
-    project(projectId: $projectId) {
-      folders {
+query GetFolders($projectId:String!) {
+  project(projectId: $projectId) {
+    rootFolder {
+      items {
         pagination {
           cursor
         }
         results {
-          name
+          __typename
           id
+          name
+          ... on Component {
+            tipVersion {
+              id
+              name
+            }
+          }
         }
       }
     }
@@ -262,21 +256,13 @@ query GetFolders($projectId:ID!) {
           case "Task 4":
             tab.title = "GetItems";
             tab.query = `# Task 4 – Pick Component
-query GetItems($projectId:ID!, $folderId:ID!) {
-  nav {
-    folder(
-      projectId: $projectId, 
-      folderId: $folderId) {
-      folders {
-        pagination {
-          cursor
-        }
-        results {
-          __typename
-          id
-          name
-        }
-      }
+query GetItems($projectId:String!, $folderId:String!) {
+  item(
+    projectId: $projectId, 
+    itemId: $folderId) {
+    ... on Folder {
+      id
+      name
       items {
         pagination {
           cursor
@@ -285,8 +271,8 @@ query GetItems($projectId:ID!, $folderId:ID!) {
           __typename
           id
           name
-          ... on MFGDesignItem {
-            tipRootComponent {
+          ... on Component {
+            tipVersion {
               id
               name
             }
@@ -294,7 +280,7 @@ query GetItems($projectId:ID!, $folderId:ID!) {
         }
       }
     }
-  } 
+  }
 }`;
             tab.variables = `{
   "projectId": "yourprojectid",
@@ -304,15 +290,13 @@ query GetItems($projectId:ID!, $folderId:ID!) {
           case "Task 5":
             tab.title = "GetProperties";
             tab.query = `# Task 5 – Get Component Properties
-query GetProperties($componentVersionId:ID!) {
-  mfg {
-    componentVersion(componentVersionId: $componentVersionId) {
-      id
-      name
-      partNumber
-      partDescription
-    }
-  } 
+query GetProperties($componentVersionId:String!) {
+  componentVersion(componentVersionId: $componentVersionId) {
+    id
+    name
+    partNumber
+    partDescription
+  }
 }`;
             tab.variables = `{
   "componentVersionId": "yourcomponentversionid"
@@ -322,21 +306,14 @@ query GetProperties($componentVersionId:ID!) {
         return tab;
       }
 
-      initPage("", async info => { 
-        const use2LO = document.getElementById("use2LO");
-        async function graphQLFetcher(graphQLParams, opts) {
-          let usedToken = info.accessToken;
-          if (use2LO.checked) {
-            let res = await fetch("/oauth/token2LO");
-            usedToken = await res.text();
-          }
-
+      initPage("", async info => {
+        function graphQLFetcher(graphQLParams, opts) {
           const { headers = {} } = opts;
           return fetch(_endpoint, {
             method: "post",
             headers: {
               "Content-Type": "application/json",
-              Authorization: "Bearer " + usedToken,
+              Authorization: "Bearer " + info.accessToken,
               ...headers,
             },
             body: JSON.stringify(graphQLParams),
@@ -350,6 +327,7 @@ query GetProperties($componentVersionId:ID!) {
             fetcher: graphQLFetcher,
             defaultEditorToolsVisibility: true,
             onTabs: onTabs,
+            activeTabIndex: 0,
             query: defaultQuery,
             variables: "",
           }),
