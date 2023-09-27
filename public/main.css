@@ -95,10 +95,10 @@ div:has(>.graphiql-sessions) {
   width: 100%;
 }
 
-.rot16 {
+.rot-16 {
   transform: rotate(16deg);
 }
 
-.rm1 {
-  margin-right: 1em;
+.mr-3 {
+  margin-right: 1rem;
 }
