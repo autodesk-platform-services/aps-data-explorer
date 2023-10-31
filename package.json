@@ -1,7 +1,7 @@
 {
-  "name": "fusion-data-explorer",
+  "name": "aps-data-explorer",
   "version": "1.0.0",
-  "description": "",
+  "description": "Utility for testing the MFG Data Model API",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
