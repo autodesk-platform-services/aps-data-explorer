@@ -29,6 +29,10 @@ body, html {
   overflow: auto;
 }
 
+.graphiql-session-header {
+  height: fit-content !important;
+}
+
 #voyager {
   position: absolute;
   height: calc(100% - 3em);
