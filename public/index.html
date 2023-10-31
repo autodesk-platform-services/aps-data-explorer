@@ -25,6 +25,8 @@
       <span class="title">MFG Data Model Explorer</span>
      
       <div id="avatar" class="dropdown text-end float-right">
+        <div id="endpoint" class="mr-3 d-inline-block">
+        </div>
         <div class="form-check form-switch mr-3 d-inline-block">
           <input class="form-check-input" type="checkbox" role="switch" id="use2LO">
           <label class="form-check-label" for="use2LO">Use 2-legged token</label>
@@ -331,7 +333,7 @@ query GetProperties($componentVersionId:ID!) {
         return tab;
       }
 
-      initPage("", async info => { 
+      initPage("", _endpoint, async info => { 
         const use2LO = document.getElementById("use2LO");
         async function graphQLFetcher(graphQLParams, opts) {
           let usedToken = info.accessToken;

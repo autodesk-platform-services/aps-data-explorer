@@ -1,4 +1,4 @@
-async function initPage(page, callback) {
+async function initPage(page, endpoint, callback) {
   try {
     const res = await fetch(`/oauth/token`);
     if (!res.ok) throw "No access token";
@@ -7,6 +7,8 @@ async function initPage(page, callback) {
     info.accessToken = await res.text();
 
     initHeader(page);
+
+    showEnvironmentInfo(endpoint);
 
     // Enable refresh time override for testing purposes
     let refreshTime = 30 * 60 * 1000;
@@ -62,4 +64,9 @@ async function initHeader(page) {
       iframe.src = url;
     };
   }
+}
+
+function showEnvironmentInfo(endpoint) {
+  if (endpoint !== "https://developer.api.autodesk.com/manufacturing/graphql/v1")
+    document.getElementById("endpoint").innerHTML = endpoint;
 }

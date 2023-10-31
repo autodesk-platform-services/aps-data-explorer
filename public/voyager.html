@@ -28,6 +28,8 @@
       />
       <span class="title">MFG Data Model Explorer</span>
       <div id="avatar" class="dropdown text-end float-right">
+        <div id="endpoint" class="mr-3 d-inline-block">
+        </div>
         <a
           href="#"
           class="link-body-emphasis text-decoration-none"
@@ -70,8 +72,8 @@
     <div id="voyager">Loading...</div>
     <script src="main.js"></script>
     <script type="module">
-      initPage("voyager", async info => {
-        const _endpoint = "%APS_DATA_ENDPOINT%";
+      const _endpoint = "%APS_DATA_ENDPOINT%";
+      initPage("voyager", _endpoint, async info => {
         const { init, voyagerIntrospectionQuery: query } = GraphQLVoyager;
         const response = await fetch(
           _endpoint,

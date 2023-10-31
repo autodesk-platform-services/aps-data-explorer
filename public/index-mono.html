@@ -24,6 +24,8 @@
       />
       <span class="title">MFG Data Model Explorer</span>
       <div id="avatar" class="dropdown text-end float-right">
+        <div id="endpoint" class="mr-3 d-inline-block">
+        </div>
         <a type="button" class="btn btn-light mr-3" target="_blank" href="/voyager">
           <img src="voyager.svg"  
             class="rot-16"
@@ -314,7 +316,7 @@ query GetProperties($componentVersionId:String!) {
         return tab;
       }
 
-      initPage("", async info => {
+      initPage("", _endpoint, async info => {
         function graphQLFetcher(graphQLParams, opts) {
           const { headers = {} } = opts;
           return fetch(_endpoint, {
