@@ -8,6 +8,14 @@ async function initPage(page, callback) {
 
     initHeader(page);
 
+    // Enable refresh time override for testing purposes
+    let refreshTime = 30 * 60 * 1000;
+    const urlParams = new URLSearchParams(window.location.search);
+    const refreshTimeParam = urlParams.get('refreshTime');
+    if (refreshTimeParam) {
+      refreshTime = refreshTimeParam * 1000;
+    }
+
     // Get a new token every 30 minutes
     setInterval(async () => {
         let res = await fetch(`/oauth/token?refresh=true`);
@@ -18,7 +26,7 @@ async function initPage(page, callback) {
           const url = await res.text();
           location.href = url + `&state=${page}`;
         }
-      }, 5000// 30 * 60 * 1000
+      }, refreshTime
     );
     
     callback(info);
