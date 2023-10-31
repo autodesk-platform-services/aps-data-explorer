@@ -22,7 +22,7 @@ app.use(
 let clientId = process.env.APS_CLIENT_ID || "YOUR CLIENT ID";
 let clientSecret = process.env.APS_CLIENT_SECRET || "YOUR CLIENT SECRET";
 let serverPort = process.env.PORT || 3000;
-let serverUrl = process.env.BASE_URL || "localhost";
+let serverUrl = process.env.BASE_URL || "http://localhost:" + serverPort;
 let callbackUrl = process.env.APS_CALLBACK_URL || `${serverUrl}/callback/oauth`;
 const apsUrl = process.env.APS_BASE_URL || "https://developer.api.autodesk.com"; 
 let dataEndpoint = process.env.APS_DATA_ENDPOINT;
@@ -185,15 +185,28 @@ app.post("/credentials", urlencodedParser, (req, res) => {
 });
 
 app.get("/userprofile", async (req, res) => {
-  const response = await axios({
-    method: "POST",
-    url: `https://api.userprofile.autodesk.com/userinfo`,
-    headers: {
-      "Authorization": "Bearer " + req.session.access_token
+  try {
+    let env = "";
+    if (req.session.apsUrl) {
+      if (req.session.apsUrl.includes("stg")) {
+        env = "-stg";
+      } else if (req.session.apsUrl.includes("dev")) {
+        env = "-dev";
+      }
     }
-  });
-  
-  res.json(response.data);
+
+    const response = await axios({
+      method: "POST",
+      url: `https://api.userprofile${env}.autodesk.com/userinfo`,
+      headers: {
+        "Authorization": "Bearer " + req.session.access_token
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).end();
+  }
 });
 
 app.get("/logout", async (req, res) => {
