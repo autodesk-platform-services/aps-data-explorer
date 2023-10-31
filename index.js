@@ -188,9 +188,9 @@ app.get("/userprofile", async (req, res) => {
   try {
     let env = "";
     if (req.session.apsUrl) {
-      if (req.session.apsUrl.includes("stg")) {
+      if (req.session.apsUrl.includes("-stg")) {
         env = "-stg";
-      } else if (req.session.apsUrl.includes("dev")) {
+      } else if (req.session.apsUrl.includes("-dev")) {
         env = "-dev";
       }
     }
