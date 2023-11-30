@@ -67,6 +67,6 @@ async function initHeader(page) {
 }
 
 function showEnvironmentInfo(endpoint) {
-  if (endpoint !== "https://developer.api.autodesk.com/manufacturing/graphql/v1")
+  if (endpoint !== "https://developer.api.autodesk.com/fusiondata/2022-04/graphql")
     document.getElementById("endpoint").innerHTML = endpoint;
 }

@@ -10,7 +10,7 @@ npm i
 
 You will need to set the value of `clientId` and `clientSecret` variables in `index.js` based on your **APS app**'s credentials and make sure that the `CallBack URL` of the app is set to `http://localhost:3000/callback/oauth` as shown in the picture\
 ![Get 3-legged token](./readme/APSCredentials.png)
-You also need to set the `dataEndpoint` variable's value, which e.g. in case of the [Fusion Data API](https://forge.autodesk.com/en/docs/fusiondata/v1/developers_guide/overview/) is "https://developer.api.autodesk.com/manufacturing/graphql/v1"
+You also need to set the `dataEndpoint` variable's value, which e.g. in case of the [Fusion Data API](https://forge.autodesk.com/en/docs/fusiondata/v1/developers_guide/overview/) is "https://developer.api.autodesk.com/fusiondata/2022-04/graphql"
 
 ## Running the app
 In a **terminal**, you can run the test with:
