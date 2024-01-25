@@ -4,7 +4,6 @@ import { fileURLToPath } from "url";
 import express from "express";
 import axios from "axios";
 import cookieSession from "cookie-session";
-import { url } from "inspector";
 
 import bodyParser from 'body-parser';
 const urlencodedParser = bodyParser.urlencoded({ extended: false })
@@ -15,7 +14,7 @@ app.use(
   cookieSession({
     name: "aps_session",
     keys: ["aps_secure_key"],
-    maxAge: 60 * 60 * 1000 // 1 hour like the token (changes to cookie content resets the timer)
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
   })
 );
 
