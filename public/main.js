@@ -50,20 +50,26 @@ async function initHeader(page) {
     document.getElementById("userName").innerHTML = data.name;
 
     document.getElementById("signOut").onclick = async () => {
-      // Log the user out (see https://aps.autodesk.com/blog/log-out-forge)
-      const iframe = document.createElement("iframe");
-      iframe.style.visibility = "hidden";
-      document.body.appendChild(iframe);
-      iframe.onload = async () => {
-        await new Promise(resolve => setTimeout(() => resolve(), 2000));
-        window.location.replace(page);
-        document.body.removeChild(iframe);
-      };
-      let res = await fetch("/logout");
-      const url = await res.text();
-      iframe.src = url;
+      logOut(page);
     };
+  } else {
+    logOut(page);
   }
+}
+
+async function logOut(page) {
+  // Log the user out (see https://aps.autodesk.com/blog/log-out-forge)
+  const iframe = document.createElement("iframe");
+  iframe.style.visibility = "hidden";
+  document.body.appendChild(iframe);
+  iframe.onload = async () => {
+    await new Promise(resolve => setTimeout(() => resolve(), 2000));
+    window.location.replace(page);
+    document.body.removeChild(iframe);
+  };
+  let res = await fetch("/logout");
+  const url = await res.text();
+  iframe.src = url;
 }
 
 function showEnvironmentInfo(endpoint) {
