@@ -53,6 +53,12 @@ async function initHeader(page) {
       logOut(page);
     };
   } else {
+    let res = await fetch(`/oauth/token?refresh=true`);
+    if (res.ok) {
+      window.location.replace(page);
+      return;
+    }
+
     logOut(page);
   }
 }
