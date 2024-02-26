@@ -28,7 +28,13 @@
       />
       <span class="title">MFG Data Model Explorer</span>
       <div id="avatar" class="dropdown text-end float-right">
-        <div id="endpoint" class="mr-3 d-inline-block">
+        <div id="apiEndpoint" class="mr-3 d-inline-block">
+        </div>
+        <div class="form-check form-switch mr-3 d-inline-block">
+          <select title="API version to use" class="form-select" id="apiVersion">
+            <option value="v1">v1 API</option>
+            <option value="v2">v2 (beta) API</option>
+          </select>
         </div>
         <a
           href="#"

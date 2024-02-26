@@ -180,7 +180,10 @@ app.post("/credentials", urlencodedParser, (req, res) => {
     delete req.session.apsUrl;
   }
 
-  res.redirect("/");
+  if (req.originalUrl.includes("/credentials")) 
+    res.redirect("/");
+  else
+    res.end();
 });
 
 app.get("/userprofile", async (req, res) => {

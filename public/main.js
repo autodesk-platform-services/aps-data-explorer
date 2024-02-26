@@ -78,7 +78,30 @@ async function logOut(page) {
   iframe.src = url;
 }
 
+const apiEndpoints = [
+  "https://developer.api.autodesk.com/fusiondata/2022-04/graphql", // v1
+  "https://developer.api.autodesk.com/beta/graphql",               // v2
+];
+
 function showEnvironmentInfo(endpoint) {
-  if (endpoint !== "https://developer.api.autodesk.com/fusiondata/2022-04/graphql")
-    document.getElementById("endpoint").innerHTML = endpoint;
+  const isCustom = !apiEndpoints.includes(endpoint);
+
+  const apiVersion = document.getElementById("apiVersion");
+  apiVersion.classList.toggle("d-none", isCustom);
+
+  if (isCustom)
+    document.getElementById("apiEndpoint").innerHTML = endpoint;
+  else {
+    apiVersion.selectedIndex = apiEndpoints.indexOf(endpoint);
+
+    apiVersion.onchange = async () => {
+      await fetch(`/credentials`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `gqlUrl=${apiEndpoints[apiVersion.selectedIndex]}`,
+      });
+
+      location.reload();
+    }
+  }
 }
