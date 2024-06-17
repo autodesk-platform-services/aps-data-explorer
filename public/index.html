@@ -253,6 +253,22 @@ query GetProjects($hubId:ID!) {
             tab.query = `# Task 3 – Pick Folder
 query GetFolders($projectId:ID!) {
   project(projectId: $projectId) {
+    items {
+      pagination {
+        cursor
+      }
+      results {
+        __typename
+        id
+        name
+        ... on DesignItem {
+          tipRootComponentVersion {
+            id
+            name
+          }
+        }
+      }
+    }
     folders {
       pagination {
         cursor
@@ -293,7 +309,7 @@ query GetItems($projectId:ID!, $folderId:ID!) {
         __typename
         id
         name
-        ... on MFGDesignItem {
+        ... on DesignItem {
           tipRootComponentVersion {
             id
             name
