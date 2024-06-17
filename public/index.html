@@ -147,11 +147,9 @@
 #
 
 query {
-  nav {
-    hubs {
-      results {
-        name
-      }
+  hubs {
+    results {
+      name
     }
   }
 }
@@ -221,15 +219,13 @@ query {
             tab.title = "GetHubs";
             tab.query = `# Task 1 – Pick Hub
 query GetHubs {
-  nav {
-    hubs {
-      pagination {
-        cursor
-      }
-      results {
-        name
-        id
-      }
+  hubs {
+    pagination {
+      cursor
+    }
+    results {
+      name
+      id
     }
   }
 }`;
@@ -238,15 +234,13 @@ query GetHubs {
             tab.title = "GetProjects";
             tab.query = `# Task 2 – Pick Project
 query GetProjects($hubId:ID!) {
-  nav {
-    projects(hubId: $hubId) {
-      pagination {
-        cursor
-      }
-      results {
-        id
-        name
-      }
+  projects(hubId: $hubId) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
     }
   }
 }`;         
@@ -258,16 +252,14 @@ query GetProjects($hubId:ID!) {
             tab.title = "GetFolders";
             tab.query = `# Task 3 – Pick Folder
 query GetFolders($projectId:ID!) {
-  nav {
-    project(projectId: $projectId) {
-      folders {
-        pagination {
-          cursor
-        }
-        results {
-          name
-          id
-        }
+  project(projectId: $projectId) {
+    folders {
+      pagination {
+        cursor
+      }
+      results {
+        name
+        id
       }
     }
   }
@@ -280,38 +272,36 @@ query GetFolders($projectId:ID!) {
             tab.title = "GetItems";
             tab.query = `# Task 4 – Pick Component
 query GetItems($projectId:ID!, $folderId:ID!) {
-  nav {
-    folder(
-      projectId: $projectId, 
-      folderId: $folderId) {
-      folders {
-        pagination {
-          cursor
-        }
-        results {
-          __typename
-          id
-          name
-        }
+  folder(
+    projectId: $projectId, 
+    folderId: $folderId) {
+    folders {
+      pagination {
+        cursor
       }
-      items {
-        pagination {
-          cursor
-        }
-        results {
-          __typename
-          id
-          name
-          ... on MFGDesignItem {
-            tipRootComponentVersion {
-              id
-              name
-            }
+      results {
+        __typename
+        id
+        name
+      }
+    }
+    items {
+      pagination {
+        cursor
+      }
+      results {
+        __typename
+        id
+        name
+        ... on MFGDesignItem {
+          tipRootComponentVersion {
+            id
+            name
           }
         }
       }
     }
-  } 
+  }
 }`;
             tab.variables = `{
   "projectId": "yourprojectid",
@@ -322,14 +312,12 @@ query GetItems($projectId:ID!, $folderId:ID!) {
             tab.title = "GetProperties";
             tab.query = `# Task 5 – Get Component Properties
 query GetProperties($componentVersionId:ID!) {
-  mfg {
-    componentVersion(componentVersionId: $componentVersionId) {
-      id
-      name
-      partNumber
-      partDescription
-    }
-  } 
+  componentVersion(componentVersionId: $componentVersionId) {
+    id
+    name
+    partNumber
+    partDescription
+  }
 }`;
             tab.variables = `{
   "componentVersionId": "yourcomponentversionid"
