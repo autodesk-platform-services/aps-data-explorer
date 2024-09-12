@@ -249,9 +249,9 @@ query GetProjects($hubId:ID!) {
 }`;
             break;
           case "Task 3":
-            tab.title = "GetFolders";
-            tab.query = `# Task 3 – Pick Folder
-query GetFolders($projectId:ID!) {
+            tab.title = "GetProjectContents";
+            tab.query = `# Task 3 – Pick Folder or Component
+query GetProjectContents($projectId:ID!) {
   project(projectId: $projectId) {
     items {
       pagination {
@@ -285,42 +285,38 @@ query GetFolders($projectId:ID!) {
 }`;
             break;
           case "Task 4":
-            tab.title = "GetItems";
-            tab.query = `# Task 4 – Pick Component
-query GetItems($projectId:ID!, $folderId:ID!) {
-  folder(
-    projectId: $projectId, 
-    folderId: $folderId) {
-    folders {
-      pagination {
-        cursor
-      }
-      results {
-        __typename
-        id
-        name
-      }
+            tab.title = "GetFolderContents";
+            tab.query = `# Task 4 – Pick Subfolder or Component
+query GetFolderContents($hubId: ID!, $folderId: ID!) {
+  itemsByFolder(hubId: $hubId, folderId: $folderId) {
+    pagination {
+      cursor
     }
-    items {
-      pagination {
-        cursor
-      }
-      results {
-        __typename
-        id
-        name
-        ... on DesignItem {
-          tipRootComponentVersion {
-            id
-            name
-          }
+    results {
+      __typename
+      id
+      name
+      ... on DesignItem {
+        tipRootComponentVersion {
+          id
+          name
         }
       }
     }
   }
+  foldersByFolderInHub(hubId: $hubId, folderId: $folderId) {
+    pagination {
+      cursor
+    }
+    results {
+      __typename
+      id
+      name
+    }
+  }
 }`;
             tab.variables = `{
-  "projectId": "yourprojectid",
+  "hubId": "yourhubid",
   "folderId": "yourfolderid"
 }`;
             break;
