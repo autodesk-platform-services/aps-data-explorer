@@ -174,7 +174,7 @@ query {
           let nonTutorialTabs = tabState.tabs.filter(
             (tab) =>
               !tab?.query?.match(
-                /Task 1 – Pick Hub|Task 2 – Pick Project|Task 3 – Pick Folder|Task 4 – Pick Component|Task 5 – Get Component Properties/g
+                /Task 1 – Pick Hub|Task 2 – Pick Project|# Task 3 – Pick Folder or Component|# Task 4 – Pick Subfolder or Component|Task 5 – Get Component Properties/g
               )
           );
           tabState.tabs = tutorialTabs.concat(nonTutorialTabs);
