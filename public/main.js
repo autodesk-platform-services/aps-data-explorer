@@ -80,7 +80,7 @@ async function logOut(page) {
 
 const apiEndpoints = [
   "https://developer.api.autodesk.com/fusiondata/2022-04/graphql", // v1
-  "https://developer.api.autodesk.com/beta/graphql",               // v2
+  "https://developer.api.autodesk.com/mfg/graphql",                // v2
 ];
 
 function showEnvironmentInfo(endpoint) {
