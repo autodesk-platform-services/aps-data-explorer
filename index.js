@@ -142,7 +142,13 @@ app.get("/oauth/url", (req, res) => {
 
 app.get("/", (req, res) => {
   let cDataEndpoint = req.session.dataEndpoint ? req.session.dataEndpoint : dataEndpoint;
-  const fileName = cDataEndpoint.includes("/fusiondata/") ? "index-mono.html" : "index.html";
+  let fileName = "index-v2.html";
+  
+  if (cDataEndpoint.includes("/fusiondata/"))
+    fileName = "index-v1.html";
+  else if (cDataEndpoint.includes("/v3/"))
+    fileName = "index-v3.html";
+
   fs.readFile(path.dirname(fileURLToPath(import.meta.url)) + '/public/' + fileName, 'utf8', (err, text) => {
     text = text.replace("%APS_DATA_ENDPOINT%", cDataEndpoint);
     res.send(text);

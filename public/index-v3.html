@@ -1,0 +1,401 @@
+<html>
+  <head>
+    <title>Data Explorer</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+      crossorigin="anonymous"
+    />
+    <link 
+      rel="stylesheet" 
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/graphiql@2.0.13/graphiql.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.css" />
+    <link rel="stylesheet" href="main.css" />
+  </head>
+
+  <body>
+    <header id="header">
+      <img
+        class="logo"
+        src="https://cdn.autodesk.io/logo/black/stacked.png"
+        alt="Autodesk Platform Services"
+      />
+      <span class="title">MFG Data Model Explorer</span>
+     
+      <div id="avatar" class="dropdown text-end float-right">
+        <div id="apiEndpoint" class="mr-3 d-inline-block">
+        </div>
+        <div class="form-check form-switch mr-3 d-inline-block">
+          <select title="API version to use" class="form-select" id="apiVersion">
+            <option value="v2">v2 API</option>
+            <option value="v3">v3 API (beta)</option>
+          </select>
+        </div>
+        <div class="form-check form-switch mr-3 d-inline-block">
+          <input class="form-check-input" type="checkbox" role="switch" id="use2LO">
+          <label class="form-check-label" for="use2LO">Use 2-legged token</label>
+        </div>
+        <a type="button" class="btn btn-light mr-3" target="_blank" href="/voyager">
+          <img src="voyager.svg"  
+            class="rot-16"
+            width="24"
+            height="24" 
+            title="Voyager" 
+          />&nbsp;Voyager&nbsp;<i class="bi bi-box-arrow-up-right"></i>
+        </a>
+        <a
+          href="#"
+          class="link-body-emphasis text-decoration-none"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          <img
+            id="avatarImage"
+            src="/profile.svg"
+            alt="mdo"
+            width="32"
+            height="32"
+            class="rounded-circle"
+          />
+          <span id="signInText" class="p-1 align-middle text-small text-dark">
+            
+          </span>
+        </a>
+
+        <ul class="dropdown-menu text-small">
+          <li id="userName" class="dropdown-item">Not logged in</li>
+          <li><hr class="dropdown-divider" /></li>
+          <li>
+            <a id="menuitemExplorer" class="dropdown-item" href="/"
+              >GraphiQL</a
+            >
+          </li>
+          <li>
+            <a id="menuitemVoyager" class="dropdown-item" href="/voyager" target="_blank"
+              >Voyager&nbsp;<i class="bi bi-box-arrow-up-right"></i></a
+            >
+          </li>
+          <li>
+            <a id="menuitemCredentials" class="dropdown-item" href="/credentials"
+              >Credentials</a
+            >
+          </li>
+          <li><hr id="signOutDivider" class="dropdown-divider" /></li>
+          <li>
+            <a id="signOut" class="dropdown-item" href="#">Sign out</a>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <div id="graphiql">Authenticating...</div>
+
+    <script
+      crossorigin
+      src="https://cdn.jsdelivr.net/npm/react@17/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://cdn.jsdelivr.net/npm/react-dom@17/umd/react-dom.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://cdn.jsdelivr.net/npm/graphiql@2.0.13/graphiql.min.js"
+    ></script>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+      crossorigin="anonymous"
+    ></script>
+
+    <script src="main.js"></script>
+
+    <script>
+      const _endpoint = "%APS_DATA_ENDPOINT%";
+
+      let defaultQuery = `# Welcome to the GraphiQL Data Explorer
+#
+# GraphiQL is an in-browser tool for writing, validating, and
+# testing GraphQL queries.
+#
+# Type queries into this side of the screen, and you will see intelligent
+# typeaheads aware of the current GraphQL type schema and live syntax and
+# validation errors highlighted within the text.
+#
+# GraphQL queries typically start with a "{" character. Lines that start
+# with a # are ignored.
+#
+# An example GraphQL query might look like:
+#
+#     query {
+#       nav {
+#         hubs {
+#           results {
+#             name
+#           }
+#         }
+#       }
+#     }
+#
+# Keyboard shortcuts:
+#
+#  Prettify Query:  Shift-Ctrl-P (or press the prettify button above)
+#
+#     Merge Query:  Shift-Ctrl-M (or press the merge button above)
+#
+#       Run Query:  Ctrl-Enter (or press the play button above)
+#
+#   Auto Complete:  Ctrl-Space (or just start typing)
+#
+
+query {
+  hubs {
+    results {
+      name
+    }
+  }
+}
+`;
+
+      function onTabs(data) {
+        console.log(data);
+      }
+
+      function setInitialTabs() {
+        let tabState = JSON.parse(
+          window.localStorage.getItem("graphiql:tabState")
+        );
+        let tutorialTabs = [
+          { query: "Task 1" },
+          { query: "Task 2" },
+          { query: "Task 3" },
+          { query: "Task 4" },
+          { query: "Task 5" },
+        ].map(ensureTutorialTab);
+        if (!!tabState) {
+          let nonTutorialTabs = tabState.tabs.filter(
+            (tab) =>
+              !tab?.query?.match(
+                /Task 1 – Pick Hub|Task 2 – Pick Project|# Task 3 – Pick Folder or Component|# Task 4 – Pick Subfolder or Component|Task 5 – Get Component Properties/g
+              )
+          );
+          tabState.tabs = tutorialTabs.concat(nonTutorialTabs);
+        } else {
+          tabState = {
+            activeTabIndex: 0,
+            tabs: [],
+          };
+          tabState.tabs.push(...tutorialTabs);
+        }
+        let tabStateString = JSON.stringify(tabState);
+        window.localStorage.setItem("graphiql:tabState", tabStateString);
+      }
+
+      function generateUUID() {
+        let d = new Date().getTime(),
+          d2 =
+            (performance && performance.now && performance.now() * 1000) || 0;
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+          let r = Math.random() * 16;
+          if (d > 0) {
+            r = (d + r) % 16 | 0;
+            d = Math.floor(d / 16);
+          } else {
+            r = (d2 + r) % 16 | 0;
+            d2 = Math.floor(d2 / 16);
+          }
+          return (c == "x" ? r : (r & 0x7) | 0x8).toString(16);
+        });
+      }
+
+      function ensureTutorialTab(tab) {
+        let task = tab.query;
+        tab.hash = null;
+        tab.headers = null;
+        tab.id = generateUUID();
+        tab.operationName = null;
+        tab.response = null;
+        tab.variables = null;
+        switch (task) {
+          case "Task 1":
+            tab.title = "GetHubs";
+            tab.query = `# Task 1 – Pick Hub
+query GetHubs {
+  hubs {
+    pagination {
+      cursor
+    }
+    results {
+      name
+      id
+    }
+  }
+}`;
+            break;
+          case "Task 2":
+            tab.title = "GetProjects";
+            tab.query = `# Task 2 – Pick Project
+query GetProjects($hubId:ID!) {
+  projects(hubId: $hubId) {
+    pagination {
+      cursor
+    }
+    results {
+      id
+      name
+    }
+  }
+}`;         
+            tab.variables = `{
+  "hubId": "yourhubid"
+}`;
+            break;
+          case "Task 3":
+            tab.title = "GetProjectContents";
+            tab.query = `# Task 3 – Pick Folder or Component
+query GetProjectContents($projectId:ID!) {
+  project(projectId: $projectId) {
+    items (pagination: {limit:50}) {
+      pagination {
+        cursor
+      }
+      results {
+        __typename
+        id
+        name
+        ... on DesignItem {
+          tipRootModel {
+            id
+            name {
+              displayValue
+              value
+            }
+          }
+        }
+      }
+    }
+    folders {
+      pagination {
+        cursor
+      }
+      results {
+        name
+        id
+      }
+    }
+  }
+}`;
+            tab.variables = `{
+  "projectId": "yourprojectid"
+}`;
+            break;
+          case "Task 4":
+            tab.title = "GetFolderContents";
+            tab.query = `# Task 4 – Pick Subfolder or Component
+query GetFolderContents($hubId: ID!, $folderId: ID!) {
+  itemsByFolder(hubId: $hubId, folderId: $folderId, pagination:{limit:50}) {
+    pagination {
+      cursor
+    }
+    results {
+      __typename
+      id
+      name
+      ... on DesignItem {
+        tipRootModel {
+          id
+          name {
+            displayValue
+            value
+          }
+        }
+      }
+    }
+  }
+  foldersByFolderInHub(hubId: $hubId, folderId: $folderId) {
+    pagination {
+      cursor
+    }
+    results {
+      __typename
+      id
+      name
+    }
+  }
+}`;
+            tab.variables = `{
+  "hubId": "yourhubid",
+  "folderId": "yourfolderid"
+}`;
+            break;
+          case "Task 5":
+            tab.title = "GetProperties";
+            tab.query = `# Task 5 – Get Component Properties
+query GetProperties($modelId:ID!) {
+  model(modelId: $modelId) {
+    id
+    name {
+      displayValue
+    }
+    component {
+      description {
+        displayValue
+      }
+      partNumber {
+        displayValue
+      }
+    }
+  }
+}`;
+            tab.variables = `{
+  "modelId": "yourmodelid"
+}`;
+            break;
+        }
+        return tab;
+      }
+
+      initPage("", _endpoint, async info => { 
+        const use2LO = document.getElementById("use2LO");
+        async function graphQLFetcher(graphQLParams, opts) {
+          let usedToken = info.accessToken;
+          if (use2LO.checked) {
+            let res = await fetch("/oauth/token2LO");
+            usedToken = await res.text();
+          }
+
+          const { headers = {} } = opts;
+          return fetch(_endpoint, {
+            method: "post",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + usedToken,
+              ...headers,
+            },
+            body: JSON.stringify(graphQLParams),
+          }).then((response) => response.json());
+        }
+
+        setInitialTabs();
+
+        ReactDOM.render(
+          React.createElement(GraphiQL, {
+            fetcher: graphQLFetcher,
+            defaultEditorToolsVisibility: true,
+            onTabs: onTabs,
+            query: defaultQuery,
+            variables: "",
+          }),
+          document.getElementById("graphiql")
+        );
+      });
+    </script>
+  </body>
+</html>
