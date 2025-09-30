@@ -170,11 +170,30 @@ app.get("/credentials", (req, res) => {
   });
 });
 
+function IsUrlValid(url) {
+  const AUTODESK_API_URL_REGEX = /^https:\/\/(developer|developer-stg|developer-dev).api.autodesk.com[\/a-z0-9]*$/i;
+
+  if (AUTODESK_API_URL_REGEX.test(url) === false)
+    return false;
+
+  return true;
+}
+
 app.post("/credentials", urlencodedParser, (req, res) => {
   req.session.client_id = req.body.clientId;
   req.session.client_secret = req.body.clientSecret;
   req.session.dataEndpoint = req.body.gqlUrl || dataEndpoint;
   req.session.apsUrl = req.body.baseUrl || apsUrl;
+
+  if (!IsUrlValid(req.session.apsUrl)) {
+    res.status(400).end("Invalid APS URL");
+    return;
+  }
+
+  if (!IsUrlValid(req.session.dataEndpoint)) {
+    res.status(400).end("Invalid Data Endpoint URL");
+    return;
+  }
 
   delete req.session.access_token;
   delete req.session.refresh_token;

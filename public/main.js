@@ -47,7 +47,7 @@ async function initHeader(page) {
     console.log(data);
     const avatarImage = document.getElementById("avatarImage");
     avatarImage.src = data.picture;
-    document.getElementById("userName").innerHTML = data.name;
+    document.getElementById("userName").textContent = data.name;
 
     document.getElementById("signOut").onclick = async () => {
       logOut(page);
@@ -91,7 +91,7 @@ function showEnvironmentInfo(endpoint) {
   apiVersion.classList.toggle("d-none", isCustom);
 
   if (isCustom)
-    document.getElementById("apiEndpoint").innerHTML = endpoint;
+    document.getElementById("apiEndpoint").textContent = endpoint;
   else {
     apiVersion.selectedIndex = apiEndpoints.indexOf(endpoint);
 
