@@ -127,15 +127,21 @@ app.get("/oauth/url", (req, res) => {
 
   let cId = req.session.client_id ? req.session.client_id : clientId;
   let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
+  let cForcePrompt = req.session?.loggedOut;
 
   const url =
     cApsUrl +
     "/authentication/v2/authorize?response_type=code" +
     "&client_id=" +
     cId +
+    `${cForcePrompt ? "&prompt=login" : ""}` +
     "&redirect_uri=" +
     callbackUrl +
     "&scope=data:read data:write data:create data:search";
+
+  if (cForcePrompt) {
+    req.session.loggedOut = false;
+  }
 
   res.end(url);
 });
@@ -240,6 +246,10 @@ app.get("/logout", async (req, res) => {
   let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
 
   req.session = null;
+
+  req.session = {
+    loggedOut: true
+  }
 
   res.end(`${cApsUrl}/authentication/v2/logout`);
 });
