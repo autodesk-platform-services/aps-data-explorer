@@ -186,20 +186,23 @@ function IsUrlValid(url) {
 }
 
 app.post("/credentials", urlencodedParser, (req, res) => {
-  req.session.client_id = req.body.clientId;
-  req.session.client_secret = req.body.clientSecret;
-  req.session.dataEndpoint = req.body.gqlUrl || dataEndpoint;
-  req.session.apsUrl = req.body.baseUrl || apsUrl;
+  const newDataEndpoint = req.body.gqlUrl || dataEndpoint;
+  const newApsUrl = req.body.baseUrl || apsUrl;
 
-  if (!IsUrlValid(req.session.apsUrl)) {
+  if (!IsUrlValid(newApsUrl)) {
     res.status(400).end("Invalid APS URL");
     return;
   }
 
-  if (!IsUrlValid(req.session.dataEndpoint)) {
+  if (!IsUrlValid(newDataEndpoint)) {
     res.status(400).end("Invalid Data Endpoint URL");
     return;
   }
+
+  req.session.client_id = req.body.clientId;
+  req.session.client_secret = req.body.clientSecret;
+  req.session.dataEndpoint = newDataEndpoint;
+  req.session.apsUrl = newApsUrl;
 
   delete req.session.access_token;
   delete req.session.refresh_token;
