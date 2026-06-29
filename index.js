@@ -57,25 +57,6 @@ app.get("/callback/oauth", async (req, res) => {
   }
 });
 
-app.get("/oauth/token2LO", async (req, res) => {
-  console.log("/oauth/token2LO", req.session);
-  let cId = req.session.client_id ? req.session.client_id : clientId;
-  let cSecret = req.session.client_secret ? req.session.client_secret : clientSecret;
-  let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
-  const clientIdSecret = btoa(`${cId}:${cSecret}`);
-  const response = await axios({
-    method: "POST",
-    url: `${cApsUrl}/authentication/v2/token`,
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Authorization": "Basic " + clientIdSecret
-    },
-    data: `grant_type=client_credentials&scope=data:read data:write data:create data:search`
-  }); 
-  
-  res.end(response.data.access_token);
-})
-
 app.get("/oauth/token", async (req, res) => {
   console.log("/oauth/token", req.session);
 
