@@ -158,7 +158,7 @@ app.get("/credentials", (req, res) => {
 });
 
 function IsUrlValid(url) {
-  const AUTODESK_API_URL_REGEX = /^https:\/\/(developer|developer-stg|developer-dev).api.autodesk.com[\/a-z0-9]*$/i;
+  const AUTODESK_API_URL_REGEX = /^https:\/\/(developer|developer-stg|developer-dev)\.api\.autodesk\.com[\/a-z0-9]*$/i;
 
   if (AUTODESK_API_URL_REGEX.test(url) === false)
     return false;
