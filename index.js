@@ -3,7 +3,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import express from "express";
 import axios from "axios";
-import cookieSession from "cookie-session";
+import session from "./lib/session.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -21,16 +21,19 @@ const cookieSecret = process.env.COOKIE_SECRET || "aps_secure_key";
 
 let app = express();
 
+// Sessions are kept server-side (in memory); the browser only ever receives
+// an opaque, signed session ID. Client secrets and tokens never leave the server.
 app.use(
-  cookieSession({
+  session({
     name: "aps_session",
-    keys: [cookieSecret],
+    secret: cookieSecret,
+    secure: serverUrl.startsWith("https://"),
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   })
 );
 
 app.get("/callback/oauth", async (req, res) => {
-  console.log("/callback/oauth", req.session);
+  console.log("/callback/oauth", req.sessionID);
 
   const { code, state } = req.query;
 
@@ -49,7 +52,6 @@ app.get("/callback/oauth", async (req, res) => {
       data: `grant_type=authorization_code&code=${code}&redirect_uri=${callbackUrl}`
     });
 
-    req.session = req.session || {};
     req.session.access_token = response.data.access_token;
     req.session.refresh_token = response.data.refresh_token;
 
@@ -61,7 +63,7 @@ app.get("/callback/oauth", async (req, res) => {
 });
 
 app.get("/oauth/token", async (req, res) => {
-  console.log("/oauth/token", req.session);
+  console.log("/oauth/token", req.sessionID);
 
   if (req.query.refresh) {
     try {
@@ -80,7 +82,6 @@ app.get("/oauth/token", async (req, res) => {
         data: `grant_type=refresh_token&refresh_token=${rToken}`
       });
 
-      req.session = req.session || {};
       req.session.access_token = response.data.access_token;
       req.session.refresh_token = response.data.refresh_token;
 
@@ -107,7 +108,7 @@ app.get("/oauth/token", async (req, res) => {
 });
 
 app.get("/oauth/url", (req, res) => {
-  console.log("/oauth/url", req.session);
+  console.log("/oauth/url", req.sessionID);
 
   let cId = req.session.client_id ? req.session.client_id : clientId;
   let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
@@ -229,16 +230,22 @@ app.get("/userprofile", async (req, res) => {
   }
 });
 
-app.get("/logout", async (req, res) => {
+app.get("/logout", (req, res) => {
   let cApsUrl = req.session.apsUrl ? req.session.apsUrl : apsUrl;
 
-  req.session = null;
+  // Drops the server-side session (tokens and secret included) and issues a new session ID
+  req.session.regenerate((err) => {
+    if (err) {
+      res.status(500).end();
+      return;
+    }
 
-  req.session = {
-    loggedOut: true
-  }
+    req.session.loggedOut = true;
 
-  res.end(`${cApsUrl}/authentication/v2/logout`);
+    req.session.save(() => {
+      res.end(`${cApsUrl}/authentication/v2/logout`);
+    });
+  });
 });
 
 
