@@ -8,9 +8,15 @@ In the **terminal** run this to install all the necessary components
 npm i
 ``` 
 
-You will need to set the value of `clientId` and `clientSecret` variables in `index.js` based on your **APS app**'s credentials and make sure that the `CallBack URL` of the app is set to `http://localhost:3000/callback/oauth` as shown in the picture\
+Create a `.env` file and fill it with these values based on your **APS app**'s credentials and make sure that the `CallBack URL` of the app is set to `http://localhost:3000/callback/oauth` as shown in the picture\
 ![Get 3-legged token](./readme/APSCredentials.png)
-You also need to set the `dataEndpoint` variable's value, which e.g. in case of the [Fusion Data API](https://forge.autodesk.com/en/docs/fusiondata/v1/developers_guide/overview/) is "https://developer.api.autodesk.com/fusiondata/2022-04/graphql"
+You also need to set the value of `APS_DATA_ENDPOINT`, which e.g. in case of the [Manufacturing Data Model API](https://forge.autodesk.com/en/docs/fusiondata/v1/developers_guide/overview/) is https://developer.api.autodesk.com/mfg/v3/graphql/public
+```
+APS_CLIENT_ID=your_client_id
+APS_CLIENT_SECRET=your_client_secret
+APS_DATA_ENDPOINT="https://developer.api.autodesk.com/mfg/v3/graphql/public"
+COOKIE_SECRET=any_arbirtary_string
+```
 
 ## Running the app
 In a **terminal**, you can run the test with:

@@ -4,19 +4,11 @@ import { fileURLToPath } from "url";
 import express from "express";
 import axios from "axios";
 import cookieSession from "cookie-session";
+import dotenv from "dotenv";
+dotenv.config();
 
 import bodyParser from 'body-parser';
 const urlencodedParser = bodyParser.urlencoded({ extended: false })
-
-let app = express();
-
-app.use(
-  cookieSession({
-    name: "aps_session",
-    keys: ["aps_secure_key"],
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  })
-);
 
 let clientId = process.env.APS_CLIENT_ID || "YOUR CLIENT ID";
 let clientSecret = process.env.APS_CLIENT_SECRET || "YOUR CLIENT SECRET";
@@ -25,6 +17,17 @@ let serverUrl = process.env.BASE_URL || "http://localhost:" + serverPort;
 let callbackUrl = process.env.APS_CALLBACK_URL || `${serverUrl}/callback/oauth`;
 const apsUrl = process.env.APS_BASE_URL || "https://developer.api.autodesk.com"; 
 let dataEndpoint = process.env.APS_DATA_ENDPOINT;
+const cookieSecret = process.env.COOKIE_SECRET || "aps_secure_key";
+
+let app = express();
+
+app.use(
+  cookieSession({
+    name: "aps_session",
+    keys: [cookieSecret],
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  })
+);
 
 app.get("/callback/oauth", async (req, res) => {
   console.log("/callback/oauth", req.session);
