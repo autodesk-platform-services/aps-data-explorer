@@ -30,6 +30,13 @@
       <span class="title">MFG Data Model Explorer</span>
      
       <div id="avatar" class="dropdown text-end float-right">
+         <div class="form-check form-switch mr-3 d-inline-block">
+          <select title="Region to use" class="form-select" id="apiRegion">
+            <option value="US">US</option>
+            <option value="DEU">DEU</option>
+            <option value="IND">IND</option>
+          </select>
+        </div>
         <div id="apiEndpoint" class="mr-3 d-inline-block">
         </div>
         <div class="form-check form-switch mr-3 d-inline-block">
@@ -357,11 +364,19 @@ query GetProperties($modelId:ID!) {
         return tab;
       }
 
+      function addRegion(headers) {
+        const region = document.getElementById("apiRegion").value;
+        if (region && headers["region"] === undefined) {
+          headers["region"] = region;
+        }
+      }
+
       initPage("", _endpoint, async info => {
         async function graphQLFetcher(graphQLParams, opts) {
           let usedToken = info.accessToken;
 
           const { headers = {} } = opts;
+          addRegion(headers);
           return fetch(_endpoint, {
             method: "post",
             headers: {
