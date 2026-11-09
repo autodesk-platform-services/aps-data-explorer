@@ -225,13 +225,11 @@ query {
             tab.title = "GetHubs";
             tab.query = `# Task 1 – Pick Hub
 query GetHubs {
-  hubs {
-    pagination {
-      cursor
-    }
+  hubBasicInfoAcrossRegions {
     results {
-      name
       id
+      name
+      region
     }
   }
 }`;
